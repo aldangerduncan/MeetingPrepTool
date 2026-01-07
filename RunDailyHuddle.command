@@ -18,7 +18,9 @@ EMAIL_INSIGHTS=$(python3 analyze_email.py)
 TODAY_FULL=$(date "+%-d %b %Y")
 # TODAY_SHORT=$(date "+%d %b %Y") # e.g. 7 Jan 2026
 
-HTML_FILE="../DailyHuddle/DailyHuddle_${TODAY_FULL// /_}.html"
+HTML_DIR="../DailyHuddle"
+mkdir -p "$HTML_DIR"
+HTML_FILE="${HTML_DIR}/DailyHuddle_${TODAY_FULL// /_}.html"
 
 cat <<EOF > "$HTML_FILE"
 <!DOCTYPE html>
