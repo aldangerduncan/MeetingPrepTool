@@ -3,7 +3,9 @@
 # Setup Cron Job for Daily Huddle
 # Schedule: 07:00 AM, Mon-Fri
 
-COMMAND_PATH="/Users/alexsheath/Documents/Antigravity/MeetingPrepTool/RunDailyHuddle.command"
+# Resolve absolute path to the directory where this script is located
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+COMMAND_PATH="$DIR/RunDailyHuddle.command"
 
 # Check if command exists
 if [ ! -f "$COMMAND_PATH" ]; then
