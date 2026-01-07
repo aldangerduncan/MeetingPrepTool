@@ -1,0 +1,10 @@
+.openai_key
+.fm_creds
+.recent_token
+.apify_key
+/Logs
+*.log
+*.html
+.DS_Store
+__pycache__/
+*.pyc

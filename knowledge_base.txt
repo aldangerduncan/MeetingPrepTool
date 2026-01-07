@@ -1,0 +1,676 @@
+# ANTIGRAVITY KNOWLEDGE BASE
+# The content of this file is passed to the AI for every meeting summary.
+# Use this to teach the AI about your business (Prospector) and key clients (ATN).
+
+[MY ROLE / PROSPECTOR]
+What Prospector Actually Is
+
+Prospector is a B2B intent intelligence and early spend signal platform.
+
+It does not sell impressions, audiences, or reach.
+It does not replace a CRM.
+It does not magically create demand.
+
+Prospector identifies organisations that are more likely than normal to spend money and explains why. It does this by monitoring, curating and structuring real-world commercial signals that typically appear before budgets are briefed to agencies or sellers.
+
+The platform is designed for people who sell high-value partnerships, media, sponsorships, advertising, and commercial deals, where timing and relevance matter more than volume.
+
+If you already know who to call but not when or why, Prospector is useful.
+If you are just blasting lists, it is not.
+
+The Core Problem Prospector Solves
+
+Most sellers waste time because:
+
+They engage companies after budgets are allocated
+
+They pitch without understanding commercial context
+
+They rely on lagging indicators like RFPs, tenders, or inbound briefs
+
+They treat all prospects as equal when they are not
+
+Prospector fixes this by answering three questions before outreach:
+
+Which organisations are showing signs they might spend?
+
+What specifically is happening inside that organisation?
+
+Why does that change the way I should approach them?
+
+What Prospector Tracks (High Level)
+
+Prospector monitors and structures pre-intent and intent signals, including but not limited to:
+
+Capital raising and funding events
+
+Senior leadership changes
+
+Marketing leadership appointments
+
+Market expansions and new store openings
+
+Product launches and brand repositioning
+
+Major infrastructure or venue developments
+
+Mergers, acquisitions, and restructures
+
+Strategic partnerships and sponsorship activity
+
+Government funding, grants, and policy shifts
+
+Commercial performance inflection points
+
+These signals are interpreted, not just scraped. Context matters. A CFO hire is not the same as a CMO hire. A regional rollout is not the same as a flagship launch.
+
+What Prospector Is Not
+
+This matters for Anti-Gravity to reason correctly.
+
+Not a lead list provider
+
+Not a contact database only
+
+Not a media planning tool
+
+Not a campaign optimisation platform
+
+Not a news aggregation service
+
+Not an email automation tool
+
+Prospector sits upstream of all of those.
+
+How Prospector Creates Value
+1. Timing Advantage
+
+Prospector surfaces opportunities weeks or months before a seller would normally become aware of them.
+
+That allows:
+
+Earlier conversations
+
+Fewer competitors
+
+Higher strategic relevance
+
+Less price pressure
+
+2. Relevance and Credibility
+
+Every insight explains what changed and why that matters commercially.
+
+This lets users:
+
+Lead with context, not product
+
+Ask smarter questions
+
+Avoid generic pitches
+
+Position themselves as informed, not opportunistic
+
+3. Focus
+
+Prospector reduces noise.
+
+Users stop asking:
+“Who should I call today?”
+
+They start asking:
+“Which of these is actually worth my time?”
+
+The Four Core Client Groups and How Prospector Fits Each
+
+This is critical. Same platform. Different jobs to be done.
+
+1. Media Sellers
+
+Who they are:
+
+Publishers
+
+Outdoor media owners
+
+Radio, TV, digital, audio, retail media
+
+Sponsorship and partnership sellers
+
+Their reality:
+
+Long sales cycles
+
+High competition
+
+Budgets often locked before contact
+
+Pressure to be consultative, not transactional
+
+How they use Prospector:
+
+Identify brands entering growth or spend phases
+
+Spot advertisers likely to brief agencies soon
+
+Understand what commercial trigger to reference in outreach
+
+Prioritise direct sales effort where timing is favourable
+
+Value to them:
+
+Fewer wasted calls
+
+Earlier engagement
+
+Better brief influence
+
+Stronger agency and client conversations
+
+Prospector helps them stop selling inventory and start selling relevance.
+
+2. Media Agencies
+
+Who they are:
+
+Media buying and planning agencies
+
+Creative agencies with media responsibility
+
+Independent and holding group agencies
+
+Their reality:
+
+Reactive by default
+
+Dependent on client briefs
+
+Under pressure to show strategic value
+
+Limited visibility into client business change
+
+How they use Prospector:
+
+Proactively alert clients to opportunities or risks
+
+Identify which clients may need media strategy updates
+
+Support new business pitching with real signals
+
+Spot prospects before formal pitches emerge
+
+Value to them:
+
+Stronger client retention
+
+Proactive rather than reactive positioning
+
+Better justification for strategic conversations
+
+Differentiation beyond price and buying power
+
+Prospector helps agencies look commercially switched on, not just operationally efficient.
+
+3. Sports Clubs
+
+Who they are:
+
+Professional and semi-professional clubs
+
+Stadium and venue operators
+
+Teams selling sponsorship and partnerships
+
+Their reality:
+
+Limited inventory
+
+Long partnership cycles
+
+Heavy reliance on personal relationships
+
+Pressure to deliver cash, not contra
+
+How they use Prospector:
+
+Identify brands entering growth or expansion phases
+
+Spot companies with community, ESG or brand-building priorities
+
+Tailor sponsorship conversations to current business realities
+
+Prioritise prospects with genuine capacity to invest
+
+Value to them:
+
+Fewer speculative sponsorship pitches
+
+Better partner fit
+
+Higher conversion to cash deals
+
+More credible commercial conversations
+
+Prospector helps clubs stop chasing logos and start chasing budgets.
+
+4. Sports Industry Bodies
+
+Who they are:
+
+Leagues
+
+Governing bodies
+
+Rights holders
+
+Event organisers
+
+Their reality:
+
+Selling large, complex partnerships
+
+Multiple stakeholders
+
+Long lead times
+
+Need to justify value beyond exposure
+
+How they use Prospector:
+
+Identify categories entering spend cycles
+
+Support strategic partner targeting
+
+Strengthen rights valuation conversations
+
+Provide commercial intelligence to stakeholders
+
+Value to them:
+
+Stronger partner alignment
+
+Better category strategy
+
+Increased commercial credibility
+
+Improved long-term partnerships
+
+Prospector becomes a strategic input, not a sales toy.
+
+5. Not-For-Profit Organisations
+
+Who they are:
+
+Charities
+
+Foundations
+
+NGOs
+
+Cause-based organisations
+
+Their reality:
+
+Competing for limited corporate dollars
+
+Often approached late or with low-value offers
+
+Need cash, not token gestures
+
+Increasing pressure to prove impact and relevance
+
+How they use Prospector:
+
+Identify companies with capacity and motive to give
+
+Spot ESG, community, or reputation-driven triggers
+
+Align partnership asks to real commercial moments
+
+Avoid brands that simply cannot support meaningful funding
+
+Value to them:
+
+Higher-quality corporate conversations
+
+Fewer wasted pitches
+
+Stronger long-term partnerships
+
+Focus on cash-generating relationships
+
+Prospector helps them stop chasing goodwill and start targeting capability.
+
+Your Role in This Ecosystem
+
+You are not selling software features.
+
+You act as:
+
+A translator between data and commercial reality
+
+A filter between noise and opportunity
+
+A guide helping clients apply intelligence to their specific sales motion
+
+Your value is not the platform alone. It is:
+
+Helping users interpret signals
+
+Helping them align searches and alerts to their market
+
+Helping them connect insight to action
+
+Helping them measure whether it actually changes behaviour
+
+If Prospector is the radar, your role is teaching people how to fly the plane properly.
+
+The Bottom Line
+
+Prospector exists to help organisations sell smarter, earlier, and with context.
+
+If Anti-Gravity understands that Prospector is about timing, relevance, and commercial signal interpretation, not leads or media buying, it will reason correctly.
+
+If it treats Prospector like a list tool or a news feed, it will fail.
+
+That distinction matters.
+
+
+[CLIENT CONTEXT]
+How Prospector Client Context Should Be Understood
+
+Meeting preparation with Prospector clients depends on four primary dimensions:
+
+Client group (what type of organisation they are)
+
+Commercial focus (what they are trying to sell or secure)
+
+Role of the person you are meeting (decision maker vs user)
+
+Relationship status (existing subscriber vs new business)
+
+If Anti-Gravity does not distinguish between these, the prep will be generic and wrong.
+
+Dimension 1: Core Client Groups
+1. Media Sellers
+
+Who they are
+
+Media owners and rights holders
+
+Sell advertising, sponsorships, or media inventory
+
+Revenue-driven, quota-carrying organisations
+
+What they care about
+
+Campaign opportunities
+
+Brands likely to brief agencies
+
+Advertisers entering growth or spend cycles
+
+Timing and budget availability
+
+How Prospector fits
+
+Identifies brands showing pre-spend or spend signals
+
+Surfaces commercial triggers to reference in outreach
+
+Helps prioritise sales effort
+
+Meeting focus
+
+Are they finding usable campaign opportunities?
+
+Are alerts and searches aligned to the categories they sell into?
+
+Are insights being acted on, or just read?
+
+How Prospector influences pipeline quality and timing
+
+2. Media Agencies
+
+Who they are
+
+Media planning and buying agencies
+
+Creative agencies with media responsibility
+
+What they care about
+
+Client retention
+
+Proactive strategic value
+
+New business opportunities
+
+Being first with insight
+
+How Prospector fits
+
+Flags opportunities clients may not be aware of
+
+Supports proactive client conversations
+
+Strengthens new business pitches
+
+Meeting focus
+
+How Prospector supports client conversations
+
+Whether insights are being shared with clients
+
+Alignment between alerts and agency client mix
+
+Differentiation vs other agencies
+
+3. Sports Clubs and Sports Industry Bodies
+
+Who they are
+
+Clubs, leagues, governing bodies, venue operators
+
+Sell sponsorships, partnerships, and rights
+
+What they care about
+
+Cash partnerships, not contra
+
+Long-term alignment with brands
+
+Partner relevance and credibility
+
+How Prospector fits
+
+Identifies brands with capacity and motive to partner
+
+Flags growth, expansion, ESG and brand-building signals
+
+Improves partner targeting and pitch relevance
+
+Meeting focus
+
+Quality of sponsorship prospects identified
+
+Fit between signals and partnership categories
+
+Whether Prospector is reducing speculative outreach
+
+Impact on conversion to paid partnerships
+
+4. Not-for-Profit Organisations
+
+Who they are
+
+Charities, foundations, NGOs
+
+What they care about
+
+Corporate funding
+
+Strategic partnerships
+
+Long-term support, not one-off gestures
+
+How Prospector fits
+
+Identifies corporates with capacity to give
+
+Surfaces ESG, community and reputation drivers
+
+Aligns asks to real commercial moments
+
+Meeting focus
+
+Whether Prospector is improving partner quality
+
+Alignment between insights and funding strategy
+
+Reduction in low-value or misaligned pitches
+
+Ability to focus on cash-generating relationships
+
+Dimension 2: Who You Are Meeting
+A. Senior Leader / Decision Maker
+
+Examples:
+
+CEO, CRO, CMO, Head of Sales, Commercial Director
+
+Budget owner or renewal decision maker
+
+They care about
+
+ROI and value for money
+
+Strategic relevance
+
+Whether Prospector influences behaviour, not just usage
+
+Adoption across the team
+
+Meeting focus
+
+Outcomes, not features
+
+How Prospector supports revenue, partnerships or retention
+
+Evidence of value (examples, not dashboards)
+
+Whether the subscription level matches actual usage
+
+B. User
+
+Examples:
+
+Sales executives
+
+Partnership managers
+
+Planners or strategists
+
+They care about
+
+Usability
+
+Relevance of insights
+
+Whether Prospector makes their job easier
+
+How it fits into their daily workflow
+
+Meeting focus
+
+How they actually use Prospector day to day
+
+Whether alerts are actionable
+
+Friction points or confusion
+
+Whether they know how to translate insight into outreach
+
+Dimension 3: Relationship Status
+A. Existing Subscriber
+
+Meeting intent
+
+Value reinforcement
+
+Optimisation
+
+Renewal risk assessment
+
+Prep focus
+
+Usage patterns (high vs low adoption)
+
+Gaps between intended and actual use
+
+Whether the client understands the full value
+
+Whether Prospector is embedded or optional
+
+Key question Anti-Gravity should optimise for:
+
+Is this client getting value, and do they know it?
+
+B. New Business / Prospect
+
+Meeting intent
+
+Discovery
+
+Qualification
+
+Fit assessment
+
+Prep focus
+
+Their commercial model
+
+What they sell or fund
+
+How early timing matters to them
+
+Whether Prospector solves a real problem or just sounds interesting
+
+Key question:
+
+What would Prospector replace or improve in their current process?
+
+How Anti-Gravity Should Use This
+
+When preparing meeting notes, the system should:
+
+Identify the client group
+
+Identify who is being met
+
+Identify existing vs prospect
+
+Tailor prep around:
+
+Campaign opportunities (media sellers)
+
+Agency opportunities (agencies)
+
+Sponsorship and partnerships (sports and NFPs)
+
+Avoid deep client-specific detail unless explicitly provided
+
+The Reality Check
+
+If the meeting prep:
+
+Talks features instead of outcomes → wrong
+
+Ignores who the person is → wrong
+
+Treats all client types the same → wrong
+
+Prospector is one platform.
+The job it does changes by client type and role.
+
+That’s the frame Anti-Gravity needs to get right.
