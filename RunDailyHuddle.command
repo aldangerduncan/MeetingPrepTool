@@ -237,8 +237,10 @@ EOF
 
 # 6. Open in Browser (if running interactively)
 # Check if running in a terminal (not cron/automated)
-if [ -t 1 ] || [ "$1" == "--open" ]; then
-    open "$HTML_FILE"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if [ -t 1 ] || [ "$1" == "--open" ]; then
+        open "$HTML_FILE"
+    fi
 fi
 
 # 7. Send Email via Web App

@@ -34,7 +34,7 @@ echo "$RESPONSE" | jq -r --arg today "$TODAY_STR" '
        (if .googleMeetUrl != "" and (.shortDate | startswith($today)) then
           "<div>
              <button class=\"remind-btn\" 
-               onclick=\"scheduleReminder('\''" + (.attendees[0] // "") + "'\'', '\''" + .title + "'\'', '\''" + .timeOnly + "'\'', '\''" + .googleMeetUrl + "'\'', this)\">
+               onclick=\"scheduleReminder('\''alandlj@gmail.com'\'', '\''\" + .title + \"'\'', '\''\" + .timeOnly + \"'\'', '\''\" + .googleMeetUrl + \"'\'', this)\">
                🔔 Remind
              </button>
            </div>"
