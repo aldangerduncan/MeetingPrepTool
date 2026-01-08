@@ -30,7 +30,7 @@ TOKEN_FILE=".recent_token"
 get_token() {
     # Try silent refresh first (uses saved credentials if available)
     if ./get_token.sh --silent; then
-        echo "[+] Token auto-refreshed."
+        # echo "[+] Token auto-refreshed." >&2
         return 0
     fi
     
@@ -81,7 +81,7 @@ RESPONSE=$(cat /tmp/fm_daily_stats.json)
 ERR_CODE=$(jq -r '.messages[0].code' /tmp/fm_daily_stats.json)
 
 if [ "$ERR_CODE" == "952" ]; then
-    echo "Token expired. Refreshing..."
+    # echo "Token expired. Refreshing..." >&2
     get_token
     TOKEN=$(cat "$TOKEN_FILE")
     curl -s -X POST "$SEARCH_URL" \
@@ -119,21 +119,21 @@ fi
 # Extract Counts
 # 1. Outbound Calls: Contact Method == "Phone" (or similar)
 # 1. Outbound Calls: Contact Method == "Outbound Call" AND Contact Success starts with "New Business"
-CALLS_OUTBOUND=$(jq '[.response.data[] | select(.fieldData["Contact Method"] == "Outbound Call" and (.fieldData["Contact Success"] | tostring | startswith("New Business")))] | length' /tmp/fm_daily_stats.json)
+CALLS_OUTBOUND=$(jq '[.response.data[] | select(.fieldData["Contact Method"] == "Outbound Call")] | length' /tmp/fm_daily_stats.json)
 
 # 2. Connected Calls: Contact Method == "Phone" AND Contact Success == "Yes" (or "Contact Made")
 # Need to verify value list for Contact Success. Assuming "Contact Made" or similar for now.
 # 2. Connected Calls: "Outbound Call" AND "New Business" AND Dialogue starts with "sw" (case-insensitive)
-CALLS_CONNECTED=$(jq '[.response.data[] | select(.fieldData["Contact Method"] == "Outbound Call" and (.fieldData["Contact Success"] | tostring | startswith("New Business")) and (.fieldData["Dialogue"] | tostring | test("^sw"; "i")))] | length' /tmp/fm_daily_stats.json)
+CALLS_CONNECTED=$(jq '[.response.data[] | select(.fieldData["Contact Method"] == "Outbound Call" and (.fieldData["Dialogue"] | tostring | test("^sw"; "i")))] | length' /tmp/fm_daily_stats.json)
 
 # 3. Emails Sent: Contact Method == "Email"
 # 3. Emails Sent: Contact Method == "Outbound Email" AND Contact Success starts with "New Business"
-EMAILS_SENT=$(jq '[.response.data[] | select(.fieldData["Contact Method"] == "Outbound Email" and (.fieldData["Contact Success"] | tostring | startswith("New Business")))] | length' /tmp/fm_daily_stats.json)
+EMAILS_SENT=$(jq '[.response.data[] | select(.fieldData["Contact Method"] == "Outbound Email")] | length' /tmp/fm_daily_stats.json)
 
 # 4. Meetings Booked: 
 # Logic: Contact Success starts with "New Business" AND (Action Item is "Arrange/Conduct Meeting" OR Contact Success contains "meeting")
 # "Meeting Booked" implies New Business per user request.
-MEETINGS_BOOKED=$(jq '[.response.data[] | select((.fieldData["Contact Success"] | tostring | startswith("New Business")) and ((.fieldData["Contact Success"] | tostring | test("meeting"; "i")) or .fieldData["Action_Item"] == "Arrange Meeting" or .fieldData["Action_Item"] == "Conduct Meeting"))] | length' /tmp/fm_daily_stats.json)
+MEETINGS_BOOKED=$(jq '[.response.data[] | select((.fieldData["Contact Success"] | tostring | test("meeting"; "i")) or .fieldData["Action_Item"] == "Arrange Meeting" or .fieldData["Action_Item"] == "Conduct Meeting")] | length' /tmp/fm_daily_stats.json)
 
 # Helper for stat block
 # Helper for stat block
@@ -162,7 +162,7 @@ if [ "$MEETINGS_BOOKED" -gt 0 ]; then
     # Filter matches MEETINGS_BOOKED logic
     jq -r '
       .response.data[] 
-      | select((.fieldData["Contact Success"] | tostring | startswith("New Business")) and ((.fieldData["Contact Success"] | tostring | test("meeting"; "i")) or .fieldData["Action_Item"] == "Arrange Meeting" or .fieldData["Action_Item"] == "Conduct Meeting"))
+      | select((.fieldData["Contact Success"] | tostring | test("meeting"; "i")) or .fieldData["Action_Item"] == "Arrange Meeting" or .fieldData["Action_Item"] == "Conduct Meeting")
       | "<div class=\"calendar-item\">
            <div class=\"calendar-time\">Booked</div>
            <div>" + .fieldData["IRD Subscribing Contacts 4::First Name"] + " " + .fieldData["IRD Subscribing Contacts 4::Surname"] + " (" + .fieldData.Company + ")</div>

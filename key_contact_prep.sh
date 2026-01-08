@@ -43,6 +43,15 @@ fi
 response=$(curl -s -X POST "$API_FIND_CONTACT" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "$payload")
 code=$(echo "$response" | jq -r '.messages[0].code')
 
+if [ "$code" == "952" ]; then
+    echo "[!] Token expired (Code 952). Refreshing..."
+    ./get_token.sh
+    TOKEN=$(cat "$TOKEN_FILE")
+    # Retry Search
+    response=$(curl -s -X POST "$API_FIND_CONTACT" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "$payload")
+    code=$(echo "$response" | jq -r '.messages[0].code')
+fi
+
 if [ "$code" != "0" ]; then echo "[-] Contact not found (Code: $code)"; exit 1; fi
 
 SUB_ID=$(echo "$response" | jq -r '.response.data[0].fieldData.ID')

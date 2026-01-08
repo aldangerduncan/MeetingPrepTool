@@ -143,9 +143,11 @@ EOF
     PAYLOAD=$(jq -n --arg html "$HTML_CONTENT" --arg subj "Meeting Prep: $M_TITLE ($M_TIME)" '{html: $html, subject: $subj}')
     curl -L -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEB_APP_URL" > /dev/null
 
-    # Open local file if requested
-    if [ -t 1 ] || [ "$1" == "--open" ]; then
-        open "$MEETING_HTML_FILE"
+    # Open local file if requested (and on Mac)
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        if [ -t 1 ] || [ "$1" == "--open" ]; then
+            open "$MEETING_HTML_FILE"
+        fi
     fi
 done
 

@@ -298,26 +298,29 @@ Do NOT just summarize the notes; interpret them through the lens of the Knowledg
 
         USER_PROMPT="Here is the dialogue history:\n\n$FULL_CONTEXT\n\n----------------\n\nContact Details:\nName: $NAME\nCompany: $COMPANY\nLinkedIn: $LINKEDIN\nClient Status: $CLIENT_STATUS\nProduct: $PRODUCT\nProspect Flag: $PROSPECT_FLAG\n\nPlease provide a summary that includes:\n1. A quick summary of the relationship status (Context: $CONTEXT_TYPE).\n2. Key topics discussed in the past.\n3. Important context (blockers, wins, personal details).\n4. Suggested key questions to ask in the next meeting, specifically tailored to their client type and status (refer to Knowledge Base).\n\nKeep it professional and concise.\nIMPORTANT: Format your response using HTML tags. Use <p> for paragraphs. Use <ul>/<ol> and <li> for lists. Use <strong> for bold. Do NOT use markdown."
 
+        # Call OpenRouter API (Fallback to OpenAI if key missing)
+        if [ -n "$OPENROUTER_KEY" ]; then
+            MODEL_ID="openai/gpt-4o"
+            API_URL="https://openrouter.ai/api/v1/chat/completions"
+            AUTH_HEADER="Authorization: Bearer $OPENROUTER_KEY"
+        else
+            MODEL_ID="gpt-4o"
+            API_URL="https://api.openai.com/v1/chat/completions"
+            AUTH_HEADER="Authorization: Bearer $OPENAI_KEY"
+        fi
+
         # Create JSON payload safely with jq
         JSON_PAYLOAD=$(jq -n \
                   --arg system "$SYSTEM_PROMPT" \
                   --arg user "$USER_PROMPT" \
+                  --arg model "$MODEL_ID" \
                   '{
-                    model: "openai/gpt-4o",
+                    model: $model,
                     messages: [
                       {role: "system", content: $system},
                       {role: "user", content: $user}
                     ]
                   }')
-
-        # Call OpenRouter API (Fallback to OpenAI if key missing)
-        if [ -n "$OPENROUTER_KEY" ]; then
-            API_URL="https://openrouter.ai/api/v1/chat/completions"
-            AUTH_HEADER="Authorization: Bearer $OPENROUTER_KEY"
-        else
-            API_URL="https://api.openai.com/v1/chat/completions"
-            AUTH_HEADER="Authorization: Bearer $OPENAI_KEY"
-        fi
 
         SUMMARY_RESPONSE=$(curl -s -X POST "$API_URL" \
              -H "Content-Type: application/json" \
