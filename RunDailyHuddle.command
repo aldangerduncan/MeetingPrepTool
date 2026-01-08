@@ -15,6 +15,10 @@ CAL_EVENTS=$(./get_calendar_events.sh)
 EMAIL_INSIGHTS=$(python3 analyze_email.py)
 
 # 5. Build HTML Report
+STATS_LABEL="Yesterday’s Stats"
+if [ "$(date +%u)" -eq 1 ]; then
+    STATS_LABEL="Last Friday’s Stats"
+fi
 TODAY_FULL=$(date "+%-d %b %Y")
 # TODAY_SHORT=$(date "+%d %b %Y") # e.g. 7 Jan 2026
 
@@ -190,7 +194,7 @@ cat <<EOF > "$HTML_FILE"
     </header>
 
     <div class="card">
-      <h2>Yesterday’s Stats</h2>
+      <h2>${STATS_LABEL:-Yesterday’s Stats}</h2>
       <div class="rep">Sales Rep: Alex Sheath</div>
 
 $FM_STATS

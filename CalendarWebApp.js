@@ -56,7 +56,9 @@ function getCalendar() {
     const calendarId = 'alex.sheath@irdgroup.com.au';
     const today = new Date();
     const start = new Date(today);
-    start.setDate(today.getDate() - 1);
+    // If today is Monday (1), look back to Friday (3 days ago). Otherwise yesterday (1 day ago).
+    const daysBack = (today.getDay() === 1) ? 3 : 1;
+    start.setDate(today.getDate() - daysBack);
     start.setHours(0, 0, 0, 0);
     const end = new Date(today);
     end.setHours(23, 59, 59, 999);

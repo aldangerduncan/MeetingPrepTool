@@ -22,7 +22,13 @@ fi
 # We define "Today" string to separate lists
 TODAY_STR=$(date "+%-d %b %Y")
 
-echo "$RESPONSE" | jq -r --arg today "$TODAY_STR" '
+# Determine correct label for "Yesterday" section
+LABEL="Yesterday"
+if [ "$(date +%u)" -eq 1 ]; then
+    LABEL="Last Friday"
+fi
+
+echo "$RESPONSE" | jq -r --arg today "$TODAY_STR" --arg label "$LABEL" '
   def html_item:
     "<div class=\"calendar-item\">
        <div style=\"display:flex; justify-content:space-between; align-items:center;\">
@@ -45,7 +51,7 @@ echo "$RESPONSE" | jq -r --arg today "$TODAY_STR" '
   | (.events | map(select(.shortDate | startswith($today)))) as $today_evs
 
   | (if ($yesterday | length) > 0 then
-       "<h3 style=\"margin:16px 0 8px; font-size:0.9rem; color:#7f8c8d; text-transform:uppercase; letter-spacing:0.05em;\">Yesterday</h3>" + 
+       "<h3 style=\"margin:16px 0 8px; font-size:0.9rem; color:#7f8c8d; text-transform:uppercase; letter-spacing:0.05em;\">" + $label + "</h3>" + 
        ($yesterday | map(html_item) | join(""))
      else "" end)
   + (if ($today_evs | length) > 0 then

@@ -10,10 +10,23 @@ if [ -n "$1" ]; then
     echo "Using specific date: $YESTERDAY"
 else
     # Default to Yesterday (US Format required for FileMaker API)
+    # If Today is Monday (1), we want Friday (3 days ago)
+    # date +%u returns 1 for Monday
+    
+    DAY_OF_WEEK=$(date +%u)
+    
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        YESTERDAY=$(date -v-1d +%m/%d/%Y)
+        if [ "$DAY_OF_WEEK" -eq 1 ]; then
+            YESTERDAY=$(date -v-3d +%m/%d/%Y)
+        else
+            YESTERDAY=$(date -v-1d +%m/%d/%Y)
+        fi
     else
-        YESTERDAY=$(date -d "yesterday" +%m/%d/%Y)
+        if [ "$DAY_OF_WEEK" -eq 1 ]; then
+            YESTERDAY=$(date -d "last friday" +%m/%d/%Y)
+        else
+            YESTERDAY=$(date -d "yesterday" +%m/%d/%Y)
+        fi
     fi
 fi
 
@@ -130,12 +143,16 @@ CALLS_CONNECTED=$(jq '[.response.data[] | select(.fieldData["Contact Method"] ==
 # 3. Emails Sent: Contact Method == "Outbound Email" AND Contact Success starts with "New Business"
 EMAILS_SENT=$(jq '[.response.data[] | select(.fieldData["Contact Method"] == "Outbound Email")] | length' /tmp/fm_daily_stats.json)
 
-# 4. Meetings Booked: 
-# Logic: Contact Success starts with "New Business" AND (Action Item is "Arrange/Conduct Meeting" OR Contact Success contains "meeting")
-# "Meeting Booked" implies New Business per user request.
-MEETINGS_BOOKED=$(jq '[.response.data[] | select((.fieldData["Contact Success"] | tostring | test("meeting"; "i")) or .fieldData["Action_Item"] == "Arrange Meeting" or .fieldData["Action_Item"] == "Conduct Meeting")] | length' /tmp/fm_daily_stats.json)
+# 4. Meetings Booked (Source: Google Calendar "Created Yesterday")
+# We fetch the stats from the Google Apps Script
+# Note: get_calendar_events.sh also fetches this, but we need it here for the stats grid.
 
-# Helper for stat block
+CAL_URL="https://script.google.com/macros/s/AKfycbxhH0lpZ3tq6KZovVQV8UpJubi74EloknJRQzYfDiV7yfAr585sdw_OGNPzCMkzjAlG/exec"
+CAL_JSON=$(curl -L -s "$CAL_URL")
+
+# Extract count from stats object (default to 0 if null)
+MEETINGS_BOOKED=$(echo "$CAL_JSON" | jq -r '.stats.createdCount // 0')
+
 # Helper for stat block
 stat_block() {
     echo "<div class=\"stat\">"
@@ -155,20 +172,18 @@ echo "</div>"
 # 2. Output Detailed Meeting Info (if any)
 if [ "$MEETINGS_BOOKED" -gt 0 ]; then
     echo "<div style=\"margin-top:24px; border-top:1px solid #eee; padding-top:16px;\">"
-    echo "  <h3 style=\"margin:0 0 12px; font-size:0.9rem; color:#7f8c8d; text-transform:uppercase; letter-spacing:0.05em;\">Booked Meetings Detail</h3>"
+    LABEL="Yesterday"
+    if [ "$(date +%u)" -eq 1 ]; then LABEL="Last Friday"; fi
+    echo "  <h3 style=\"margin:0 0 12px; font-size:0.9rem; color:#7f8c8d; text-transform:uppercase; letter-spacing:0.05em;\">Meetings Booked $LABEL</h3>"
     
-    # Extract details using jq
-    # Extract details using jq
-    # Filter matches MEETINGS_BOOKED logic
-    jq -r '
-      .response.data[] 
-      | select((.fieldData["Contact Success"] | tostring | test("meeting"; "i")) or .fieldData["Action_Item"] == "Arrange Meeting" or .fieldData["Action_Item"] == "Conduct Meeting")
+    # Extract details using jq from the Calendar JSON
+    echo "$CAL_JSON" | jq -r '
+      .stats.createdList[]
       | "<div class=\"calendar-item\">
-           <div class=\"calendar-time\">Booked</div>
-           <div>" + .fieldData["IRD Subscribing Contacts 4::First Name"] + " " + .fieldData["IRD Subscribing Contacts 4::Surname"] + " (" + .fieldData.Company + ")</div>
-           <div class=\"calendar-meta\">" + .fieldData["IRD Subscribing Contacts 4::Email"] + "</div>
+           <div class=\"calendar-time\">" + .startTime + "</div>
+           <div>" + .title + "</div>
+           <div class=\"calendar-meta\">Created Yesterday</div>
          </div>"
-    ' /tmp/fm_daily_stats.json
-
+    '
     echo "</div>"
 fi
