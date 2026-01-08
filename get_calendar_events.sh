@@ -33,10 +33,9 @@ echo "$RESPONSE" | jq -r --arg today "$TODAY_STR" '
          </div>" +
        (if .googleMeetUrl != "" and (.shortDate | startswith($today)) then
           "<div>
-             <button class=\"remind-btn\" 
-               onclick=\"scheduleReminder('\''alandlj@gmail.com'\'', '\''\" + .title + \"'\'', '\''\" + .timeOnly + \"'\'', '\''\" + .googleMeetUrl + \"'\'', this)\">
+             <a href=\"https://script.google.com/macros/s/AKfycbxhH0lpZ3tq6KZovVQV8UpJubi74EloknJRQzYfDiV7yfAr585sdw_OGNPzCMkzjAlG/exec?action=schedule&email=" + (.attendees[0] // "") + "&name=" + (.title | @uri) + "&time=" + (.timeOnly | @uri) + "&meetUrl=" + (.googleMeetUrl | @uri) + "\" target=\"_blank\" style=\"background:#2980b9; color:white; padding:6px 12px; border-radius:4px; text-decoration:none; font-size:12px; display:inline-block;\">
                🔔 Remind
-             </button>
+             </a>
            </div>"
         else "" end) + "
        </div>
