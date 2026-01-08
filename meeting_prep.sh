@@ -86,9 +86,19 @@ fi
 
 # 2. Handle Search Result
     
+    # Auto-Refresh on 952 (Expired Token)
     if [ "$code" == "952" ]; then
-        echo "[-] Error: Invalid or Expired Token (Code 952)."
-        echo "    Please run with a valid token: ./meeting_prep.sh \"$QUERY\" \"NEW_TOKEN\""
+        # echo "[-] Token expired (Code 952). Refreshing..." >&2
+        ./get_token.sh --silent
+        TOKEN=$(cat "$TOKEN_FILE")
+        # Retry Search
+        response=$(search_contact "$payload")
+        code=$(echo "$response" | jq -r '.messages[0].code')
+    fi
+
+    if [ "$code" == "952" ]; then
+        echo "[-] Error: Token expired again after refresh."
+        echo "    Please run ./get_token.sh manually."
         exit 1
     fi
 
