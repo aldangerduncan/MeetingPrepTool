@@ -90,7 +90,7 @@ fi
     if [ "$code" == "952" ]; then
         # echo "[-] Token expired (Code 952). Refreshing..." >&2
         ./get_token.sh --silent
-        TOKEN=$(cat "$TOKEN_FILE")
+        TOKEN=$(cat ".recent_token")
         # Retry Search
         response=$(search_contact "$payload")
         code=$(echo "$response" | jq -r '.messages[0].code')
@@ -174,7 +174,7 @@ echo ""
     FULL_CONTEXT=""
     
     # Using a temp file to handle special characters/newlines safely during the loop
-    TEMP_CONTEXT_FILE="/tmp/meeting_context.txt"
+    TEMP_CONTEXT_FILE="/tmp/meeting_context_$(date +%s)_$RANDOM.txt"
     > "$TEMP_CONTEXT_FILE"
 
     echo "$response_dialogues" | jq -c '.response.data[]' | while read -r record; do
@@ -187,6 +187,7 @@ echo ""
     done
     
     FULL_CONTEXT=$(cat "$TEMP_CONTEXT_FILE")
+    rm -f "$TEMP_CONTEXT_FILE"
 
     # 4. LinkedIn Enrichment (Apify) - Profile Posts Scraper
     APIFY_KEY_FILE=".apify_key"

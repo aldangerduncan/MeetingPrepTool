@@ -26,7 +26,7 @@ fi
 
 # 2. Get OpenAI Key
 if [ -f "$OPENAI_KEY_FILE" ]; then
-    OPENAI_KEY=$(cat "$OPENAI_KEY_FILE")
+    OPENAI_KEY=$(cat "$OPENAI_KEY_FILE" | tr -d '[:space:]')
 else
     echo "[-] No OpenAI Key found."
     exit 1
@@ -120,7 +120,7 @@ EOF
         RAW_OUTPUT=$(./meeting_prep.sh "$ATT_EMAIL" "$TOKEN" "$OPENAI_KEY" "$M_COLOR")
         
         # Clean Output
-        CLEAN_OUTPUT=$(echo "$RAW_OUTPUT" | grep -v "^\*\*\*" | grep -v "^\[\*\]" | grep -v "^\[-\]" | grep -v "^\[+\]" | grep -v "^===" | grep -v "Generating Smart" | grep -v "This might take" | grep -v "^Use the text above" | sed 's/^ //g' | perl -pe 's/\*\*(.*?)\*\*/<strong>$1<\/strong>/g')
+        CLEAN_OUTPUT=$(echo "$RAW_OUTPUT" | grep -v "^\*\*\*" | grep -v "^\[\*\]" | grep -v "^\[+\]" | grep -v "^===" | grep -v "Generating Smart" | grep -v "This might take" | grep -v "^Use the text above" | sed 's/^ //g' | perl -pe 's/\*\*(.*?)\*\*/<strong>$1<\/strong>/g')
         
         # Add Card to Meeting HTML
         cat <<EOF >> "$MEETING_HTML_FILE"
