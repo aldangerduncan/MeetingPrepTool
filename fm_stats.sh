@@ -151,7 +151,10 @@ CAL_URL="https://script.google.com/macros/s/AKfycbxhH0lpZ3tq6KZovVQV8UpJubi74Elo
 CAL_JSON=$(curl -L -s "$CAL_URL")
 
 # Extract count from stats object (default to 0 if null)
-MEETINGS_BOOKED=$(echo "$CAL_JSON" | jq -r '.stats.createdCount // 0')
+MEETINGS_BOOKED=$(printf '%s\n' "$CAL_JSON" | jq -r '.stats.createdCount // 0')
+if [ $? -ne 0 ] || [ -z "$MEETINGS_BOOKED" ]; then
+    MEETINGS_BOOKED="0"
+fi
 
 # Helper for stat block
 stat_block() {
@@ -170,20 +173,4 @@ stat_block "$MEETINGS_BOOKED" "Meetings Booked"
 echo "</div>"
 
 # 2. Output Detailed Meeting Info (if any)
-if [ "$MEETINGS_BOOKED" -gt 0 ]; then
-    echo "<div style=\"margin-top:24px; border-top:1px solid #eee; padding-top:16px;\">"
-    LABEL="Yesterday"
-    if [ "$(date +%u)" -eq 1 ]; then LABEL="Last Friday"; fi
-    echo "  <h3 style=\"margin:0 0 12px; font-size:0.9rem; color:#7f8c8d; text-transform:uppercase; letter-spacing:0.05em;\">Meetings Booked $LABEL</h3>"
-    
-    # Extract details using jq from the Calendar JSON
-    echo "$CAL_JSON" | jq -r '
-      .stats.createdList[]
-      | "<div class=\"calendar-item\">
-           <div class=\"calendar-time\">" + .startTime + "</div>
-           <div>" + .title + "</div>
-           <div class=\"calendar-meta\">Created Yesterday</div>
-         </div>"
-    '
-    echo "</div>"
-fi
+

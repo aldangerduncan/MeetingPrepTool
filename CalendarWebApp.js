@@ -66,6 +66,7 @@ function getCalendar() {
     const calendar = CalendarApp.getCalendarById(calendarId);
     if (!calendar) return ContentService.createTextOutput(JSON.stringify({ error: "Calendar not found" })).setMimeType(ContentService.MimeType.JSON);
 
+    // 1. Get Events Occurring (Agenda)
     const events = calendar.getEvents(start, end);
     const skipTitles = ['Home', 'Daily Huddle', 'IRD Fornightly Payroll', 'Office', 'FRIYAY', 'NB -sheathy', 'Revenue meeting', 'BUSY', 'Edd and Alex 1 on 1'].map(t => t.toLowerCase().trim());
 
@@ -87,7 +88,70 @@ function getCalendar() {
         };
     }).filter(e => e !== null);
 
-    return ContentService.createTextOutput(JSON.stringify({ events: outputEvents, count: outputEvents.length })).setMimeType(ContentService.MimeType.JSON);
+    // 2. Get Events Created (KPI: Meetings Booked)
+    const stats = getCreatedEventsStats_(calendarId, start, end, skipTitles);
+
+    return ContentService.createTextOutput(JSON.stringify({
+        events: outputEvents,
+        count: outputEvents.length,
+        stats: stats
+    })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getCreatedEventsStats_(calendarId, start, end, skipTitles) {
+    // Uses Advanced Calendar Service to find events created in the window (meetings booked)
+    // updatedMin catches events touched; we assume created >= start.
+
+    let createdCount = 0;
+    let createdList = [];
+
+    try {
+        const startStr = start.toISOString();
+
+        let optionalArgs = {
+            updatedMin: startStr,
+            showDeleted: false,
+            singleEvents: true,
+            orderBy: 'startTime',
+            maxResults: 100
+        };
+
+        const response = Calendar.Events.list(calendarId, optionalArgs);
+        const items = response.items || [];
+
+        items.forEach(ev => {
+            if (!ev.created) return;
+            const createdTime = new Date(ev.created);
+
+            if (createdTime >= start && createdTime <= end) {
+                const title = ev.summary || "(No Title)";
+                const cleanTitle = title.toLowerCase().trim();
+
+                if (skipTitles.some(skip => cleanTitle.includes(skip))) return;
+
+                createdCount++;
+
+                let startTimeStr = "";
+                if (ev.start.dateTime) {
+                    startTimeStr = Utilities.formatDate(new Date(ev.start.dateTime), Session.getScriptTimeZone(), "d MMM HH:mm");
+                } else if (ev.start.date) {
+                    startTimeStr = ev.start.date + " (All Day)";
+                }
+
+                createdList.push({
+                    title: title,
+                    startTime: startTimeStr,
+                    createdTime: Utilities.formatDate(createdTime, Session.getScriptTimeZone(), "HH:mm")
+                });
+            }
+        });
+
+    } catch (e) {
+        Logger.log("Error fetching created stats: " + e.message);
+        return { createdCount: 0, createdList: [], error: e.message };
+    }
+
+    return { createdCount: createdCount, createdList: createdList };
 }
 
 function getMeetLink_(evt, calendarId) {
