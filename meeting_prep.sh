@@ -237,8 +237,8 @@ echo ""
                     echo "[-] Apify returned data but no posts/headline found."
                 fi
             else 
-                echo "[-] Apify Error or No Data:"
-                echo "$APIFY_RESPONSE" | jq -r '.error.message // "Unknown Error"'
+                echo "[-] Apify Error or No Data:" >&2
+                echo "$APIFY_RESPONSE" | jq -r '.error.message // "Unknown Error"' >&2
             fi
         fi
     fi
@@ -343,8 +343,10 @@ Do NOT just summarize the notes; interpret them through the lens of the Knowledg
         SUMMARY_TEXT=$(echo "$SUMMARY_RESPONSE" | jq -r '.choices[0].message.content')
         
         if [ "$SUMMARY_TEXT" == "null" ]; then
-             echo "[-] Error getting summary from OpenAI:"
-             echo "$SUMMARY_RESPONSE"
+             echo "[-] Error getting summary from OpenAI:" >&2
+             echo "$SUMMARY_RESPONSE" >&2
+             echo "" >&2
+             echo "Falling back to raw log:"
              echo ""
              echo "Falling back to raw log:"
              echo "$FULL_CONTEXT"
