@@ -39,7 +39,7 @@ echo "$RESPONSE" | jq -r --arg today "$TODAY_STR" --arg label "$LABEL" '
          </div>" +
        (if .googleMeetUrl != "" and (.shortDate | startswith($today)) then
           "<div>
-             <a href=\"https://script.google.com/macros/s/AKfycbxhH0lpZ3tq6KZovVQV8UpJubi74EloknJRQzYfDiV7yfAr585sdw_OGNPzCMkzjAlG/exec?action=schedule&email=" + (.attendees[0] // "") + "&name=" + (.title | @uri) + "&time=" + (.timeOnly | @uri) + "&meetUrl=" + (.googleMeetUrl | @uri) + "\" target=\"_blank\" style=\"background:#2980b9; color:white; padding:6px 12px; border-radius:4px; text-decoration:none; font-size:12px; display:inline-block;\">
+             <a href=\"https://script.google.com/macros/s/AKfycbxhH0lpZ3tq6KZovVQV8UpJubi74EloknJRQzYfDiV7yfAr585sdw_OGNPzCMkzjAlG/exec?action=schedule&email=" + (.attendees[0] // "") + "&name=" + (.title | @uri) + "&title=" + (.title | @uri) + "&time=" + (.timeOnly | @uri) + "&meetUrl=" + (.googleMeetUrl | @uri) + "\" target=\"_blank\" style=\"background:#2980b9; color:white; padding:6px 12px; border-radius:4px; text-decoration:none; font-size:12px; display:inline-block;\">
                🔔 Remind
              </a>
            </div>"

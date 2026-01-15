@@ -15,12 +15,18 @@ if [ -f "$TOKEN_FILE" ]; then
     TOKEN_AGE=$(($(date +%s) - $(stat -f %m "$TOKEN_FILE")))
     if [ "$TOKEN_AGE" -gt 600 ]; then
         echo "[*] Token is old (${TOKEN_AGE}s). Refreshing..."
-        ./get_token.sh
+        if ! ./get_token.sh; then
+            echo "[-] Error: Failed to refresh token. Check credentials."
+            exit 1
+        fi
         TOKEN=$(cat "$TOKEN_FILE")
     fi
 else
     echo "[-] No token found. Running get_token.sh..."
-    ./get_token.sh
+    if ! ./get_token.sh; then
+        echo "[-] Error: Failed to generate token. Check credentials."
+        exit 1
+    fi
     TOKEN=$(cat "$TOKEN_FILE")
 fi
 
@@ -114,6 +120,7 @@ EOF
     # Loop through attendees for THIS meeting
     IFS=$'\n'
     for ATT_EMAIL in $M_ATTENDEES; do
+        ATT_EMAIL=$(echo "$ATT_EMAIL" | tr -d '[:space:]')
         echo "    [*] Preparing Person: $ATT_EMAIL..."
         
         # Run Prep Script
