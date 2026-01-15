@@ -123,6 +123,11 @@ EOF
         ATT_EMAIL=$(echo "$ATT_EMAIL" | tr -d '[:space:]')
         echo "    [*] Preparing Person: $ATT_EMAIL..."
         
+        # Re-read token in case it was refreshed by a previous iteration or another process
+        if [ -f "$TOKEN_FILE" ]; then
+            TOKEN=$(cat "$TOKEN_FILE")
+        fi
+
         # Run Prep Script
         RAW_OUTPUT=$(./meeting_prep.sh "$ATT_EMAIL" "$TOKEN" "$OPENAI_KEY" "$M_COLOR")
         

@@ -86,24 +86,29 @@ fi
 
 # 2. Handle Search Result
     
-    # Auto-Refresh on 952 (Expired Token) or 401 (Unauthorized/No Records - retry once to be safe)
-    if [ "$code" == "952" ] || [ "$code" == "401" ]; then
+    # Auto-Refresh on 952 (Expired Token) ONLY. 
+    # Code 401 in FileMaker means "No Records Found", so we should NOT refresh for that.
+    if [ "$code" == "952" ]; then
         # echo "[-] Token expired (Code 952). Refreshing..." >&2
-        ./get_token.sh --silent
-        TOKEN=$(cat ".recent_token")
-        # Retry Search
-        response=$(search_contact "$payload")
-        code=$(echo "$response" | jq -r '.messages[0].code')
+        if ./get_token.sh --silent; then
+            TOKEN=$(cat ".recent_token")
+            # Retry Search
+            response=$(search_contact "$payload")
+            code=$(echo "$response" | jq -r '.messages[0].code')
+        else
+            echo "[-] Error: Token refresh failed inside meeting_prep.sh"
+            exit 1
+        fi
     fi
 
-    if [ "$code" == "952" ] || [ "$code" == "401" ]; then
+    if [ "$code" == "952" ]; then
         echo "[-] Error: Token expired again after refresh."
         echo "    Please run ./get_token.sh manually."
         exit 1
     fi
 
     if [ "$code" != "0" ]; then
-        echo "[-] Contact NOT FOUND. (API Code: $code)"
+        echo "[-] Contact not in FMP (API Code: $code)"
         # Fallback/Suggestion logic could go here
         exit 0
     fi

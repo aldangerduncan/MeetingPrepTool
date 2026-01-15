@@ -13,6 +13,10 @@ DIR="MeetingPrep"
 echo "--- Connecting to VPS ($HOST) ---"
 echo "You may be asked for your VPS password."
 
+# 0. Sync Secrets
+echo "[Local] Copying credentials to VPS..."
+scp .fm_creds .openai_key .apify_key "$USER@$HOST:$DIR/" 2>/dev/null || echo "[!] Warning: Some credential files could not be copied (they may not exist locally)."
+
 ssh -A "$USER@$HOST" "bash -s" <<EOF
     # 1. Update Code
     echo "[VPS] Updating Codebase..."

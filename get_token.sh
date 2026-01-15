@@ -89,12 +89,7 @@ else
     if [ "$IS_SILENT" = false ]; then
         echo "[-] FAILED to get token."
         echo "Response: $RESPONSE"
-        # If failed with saved creds, maybe delete them?
-        if [ -f "$CRED_FILE" ]; then
-            echo "[!] Your saved credentials might be invalid."
-            rm "$CRED_FILE"
-            echo "    (Removed invalid credential file)"
-        fi
+        echo "[!] Check your network connection or credentials in $CRED_FILE."
     fi
     exit 1
 fi
