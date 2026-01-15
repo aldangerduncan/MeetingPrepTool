@@ -342,7 +342,7 @@ Do NOT just summarize the notes; interpret them through the lens of the Knowledg
         # Extract content
         SUMMARY_TEXT=$(echo "$SUMMARY_RESPONSE" | jq -r '.choices[0].message.content')
         
-        if [ "$SUMMARY_TEXT" == "null" ]; then
+        if [ "$SUMMARY_TEXT" == "null" ] || [ -z "$SUMMARY_TEXT" ]; then
              echo "[-] Error getting summary from OpenAI:" >&2
              echo "$SUMMARY_RESPONSE" >&2
              echo "" >&2
