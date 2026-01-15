@@ -88,7 +88,6 @@ fi
     
     # Auto-Refresh on 952 (Expired Token) or 401 (Unauthorized/No Records - retry once to be safe)
     if [ "$code" == "952" ] || [ "$code" == "401" ]; then
-        echo "DEBUG: Attempting Token Refresh (Code $code)..." >&2
         # echo "[-] Token expired (Code 952). Refreshing..." >&2
         ./get_token.sh --silent
         TOKEN=$(cat ".recent_token")
