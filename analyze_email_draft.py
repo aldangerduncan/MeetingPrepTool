@@ -7,12 +7,12 @@ from email import policy
 from bs4 import BeautifulSoup
 
 # Configuration
-OPENROUTER_KEY_FILE = "../.openrouter_key"
+OPENAI_KEY_FILE = "../.openai_key"
 EMAIL_FILE = "../DailyHuddle/Your alert has arrived!.eml"
 
 def get_api_key():
     try:
-        with open(OPENROUTER_KEY_FILE, "r") as f:
+        with open(OPENAI_KEY_FILE, "r") as f:
             return f.read().strip()
     except:
         return None

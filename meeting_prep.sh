@@ -9,7 +9,6 @@ QUERY="$1"
 TOKEN="${2:-$DEFAULT_TOKEN}"
 OPENAI_KEY="$3"
 COLOR_ID="$4"
-OPENROUTER_KEY=$(cat ../.openrouter_key 2>/dev/null || cat .openrouter_key 2>/dev/null)
 
 if [ -z "$QUERY" ]; then
   echo "Usage: ./meeting_prep.sh \"Name or Email\" [Token]"
@@ -194,60 +193,6 @@ echo ""
     FULL_CONTEXT=$(cat "$TEMP_CONTEXT_FILE")
     rm -f "$TEMP_CONTEXT_FILE"
 
-    # 4. LinkedIn Enrichment (Apify) - Profile Posts Scraper
-    APIFY_KEY_FILE=".apify_key"
-    APIFY_CONTEXT=""
-    
-    if [ -f "$APIFY_KEY_FILE" ] && [ -n "$LINKEDIN" ]; then
-        APIFY_TOKEN=$(cat "$APIFY_KEY_FILE")
-        if [ -n "$APIFY_TOKEN" ]; then
-            # echo "Processing LinkedIn Profile via Apify..."
-            # echo "(Fetching recent posts using Actor: LQQIXN9Othf8f7R5n)"
-            
-            # Input: { "urls": [ "..." ], "minDelay": 2, "maxDelay": 5 }
-            APIFY_INPUT=$(jq -n --arg url "$LINKEDIN" '{urls: [$url], minDelay: 2, maxDelay: 5}')
-            
-            # Actor: LQQIXN9Othf8f7R5n (Linkedin profile post scraper)
-            APIFY_URL="https://api.apify.com/v2/acts/LQQIXN9Othf8f7R5n/run-sync-get-dataset-items?token=$APIFY_TOKEN"
-            
-            APIFY_RESPONSE=$(curl -s -X POST "$APIFY_URL" \
-                 -H "Content-Type: application/json" \
-                 -d "$APIFY_INPUT")
-                 
-            # Response is an Array of Objects (Posts)
-            # We want to extract:
-            # 1. Headline (from the author object of the first post)
-            # 2. Recent Posts (Text and Date)
-            
-            # Check if we got an array
-            IS_ARRAY=$(echo "$APIFY_RESPONSE" | jq -r 'type')
-            
-            if [ "$IS_ARRAY" == "array" ]; then
-                # Extract Headline
-                L_HEADLINE=$(echo "$APIFY_RESPONSE" | jq -r '.[0].author.headline // empty')
-                
-                # Extract Top 3 Posts
-                # Format: "On [Date]: [First 200 chars]..."
-                L_POSTS=$(echo "$APIFY_RESPONSE" | jq -r '.[0:3] | .[] | "On " + (.posted_at.date // "Unknown") + ": " + (.text[0:200] // "") + "..."')
-                
-                if [ -n "$L_HEADLINE" ] || [ -n "$L_POSTS" ]; then
-                    # echo "[+] LinkedIn Data Fetched successfully."
-                    APIFY_CONTEXT=$'\n'"--- LINKEDIN INTELLIGENCE ---"$'\n'
-                    APIFY_CONTEXT+="Headline (Current Role): $L_HEADLINE"$'\n'
-                    APIFY_CONTEXT+="Recent Posts / Activity:"$'\n'"$L_POSTS"$'\n'
-                    
-                    # Append to Full Context
-                    FULL_CONTEXT+="$APIFY_CONTEXT"
-                else
-                    echo "[-] Apify returned data but no posts/headline found."
-                fi
-            else 
-                echo "[-] Apify Error or No Data:" >&2
-                echo "$APIFY_RESPONSE" | jq -r '.error.message // "Unknown Error"' >&2
-            fi
-        fi
-    fi
-
     if [ -n "$OPENAI_KEY" ]; then
         echo "Generating Smart Summary (powered by OpenAI)..."
         echo "(This might take a few seconds)"
@@ -314,16 +259,9 @@ Do NOT just summarize the notes; interpret them through the lens of the Knowledg
 
         USER_PROMPT="Here is the dialogue history:\n\n$FULL_CONTEXT\n\n----------------\n\nContact Details:\nName: $NAME\nCompany: $COMPANY\nLinkedIn: $LINKEDIN\nClient Status: $CLIENT_STATUS\nProduct: $PRODUCT\nProspect Flag: $PROSPECT_FLAG\n\nPlease provide a summary that includes:\n1. A quick summary of the relationship status (Context: $CONTEXT_TYPE).\n2. Key topics discussed in the past.\n3. Important context (blockers, wins, personal details).\n4. Suggested key questions to ask in the next meeting, specifically tailored to their client type and status (refer to Knowledge Base).\n\nKeep it professional and concise.\nIMPORTANT: Format your response using HTML tags. Use <p> for paragraphs. Use <ul>/<ol> and <li> for lists. Use <strong> for bold. Do NOT use markdown."
 
-        # Call OpenAI API (Fallback to OpenRouter if OpenAI key missing)
-        if [ -n "$OPENAI_KEY" ]; then
-            MODEL_ID="gpt-4o"
-            API_URL="https://api.openai.com/v1/chat/completions"
-            AUTH_HEADER="Authorization: Bearer $OPENAI_KEY"
-        elif [ -n "$OPENROUTER_KEY" ]; then
-            MODEL_ID="openai/gpt-4o"
-            API_URL="https://openrouter.ai/api/v1/chat/completions"
-            AUTH_HEADER="Authorization: Bearer $OPENROUTER_KEY"
-        fi
+        MODEL_ID="gpt-4o"
+        API_URL="https://api.openai.com/v1/chat/completions"
+        AUTH_HEADER="Authorization: Bearer $OPENAI_KEY"
 
         # Create JSON payload safely with jq
         JSON_PAYLOAD=$(jq -n \

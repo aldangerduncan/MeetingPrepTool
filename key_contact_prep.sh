@@ -7,7 +7,6 @@ HOST="https://fms14.filemakerstudio.com.au"
 DATABASE="IRD Subscribing Contacts"
 TOKEN_FILE=".recent_token"
 OPENAI_KEY_FILE=".openai_key"
-OPENROUTER_KEY_FILE="../.openrouter_key"
 LOGO_FILE="logo.png"
 
 # Arguments
@@ -20,7 +19,6 @@ fi
 # 1. Keys & Tokens
 if [ -f "$TOKEN_FILE" ]; then TOKEN=$(cat "$TOKEN_FILE"); else ./get_token.sh; TOKEN=$(cat "$TOKEN_FILE"); fi
 OPENAI_KEY=$(cat "$OPENAI_KEY_FILE" 2>/dev/null)
-OPENROUTER_KEY=$(cat "$OPENROUTER_KEY_FILE" 2>/dev/null || cat ".openrouter_key" 2>/dev/null)
 
 # 2. FileMaker Search
 encoded_db=$(echo "$DATABASE" | jq -Rr @uri)
@@ -110,15 +108,9 @@ Relationship: $CLIENT_STATUS ($PRODUCT)
 Interaction Log:
 $DIALOGUE_LOG"
 
-if [ -n "$OPENROUTER_KEY" ]; then
-    API_URL="https://openrouter.ai/api/v1/chat/completions"
-    AUTH="Authorization: Bearer $OPENROUTER_KEY"
-    MODEL="openai/gpt-4o"
-else
-    API_URL="https://api.openai.com/v1/chat/completions"
-    AUTH="Authorization: Bearer $OPENAI_KEY"
-    MODEL="gpt-4o"
-fi
+API_URL="https://api.openai.com/v1/chat/completions"
+AUTH="Authorization: Bearer $OPENAI_KEY"
+MODEL="gpt-4o"
 
 JSON_INPUT=$(jq -n --arg sys "$SYSTEM_PROMPT" --arg model "$MODEL" '{model: $model, messages: [{role: "system", content: $sys}], response_format: {type: "json_object"}}')
 AI_RESPONSE=$(curl -s -X POST "$API_URL" -H "Content-Type: application/json" -H "$AUTH" -d "$JSON_INPUT")

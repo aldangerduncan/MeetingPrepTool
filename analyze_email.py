@@ -9,21 +9,12 @@ OPENAI_KEY_FILE = "../.openai_key"  # Relative to MeetingPrepTool
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxhH0lpZ3tq6KZovVQV8UpJubi74EloknJRQzYfDiV7yfAr585sdw_OGNPzCMkzjAlG/exec"
 
 def get_api_keys():
-    keys = {"openai": None, "openrouter": None}
-    # OpenRouter
-    or_paths = ["../.openrouter_key", ".openrouter_key", "../../.openrouter_key"]
-    for path in or_paths:
-        if os.path.exists(path):
-            with open(path, "r") as f:
-                keys["openrouter"] = f.read().strip()
-                break
-    # OpenAI
-    oa_paths = ["../.openai_key", ".openai_key"]
-    for path in oa_paths:
+    keys = {"openai": None}
+    for path in ["../.openai_key", ".openai_key"]:
         if os.path.exists(path):
             with open(path, "r") as f:
                 keys["openai"] = f.read().strip()
-                break
+            break
     return keys
 
 def strip_html_tags(text):
@@ -52,15 +43,10 @@ def fetch_email_from_webapp():
         return None
 
 def call_ai(text, keys):
-    if keys.get("openrouter"):
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        api_key = keys["openrouter"]
-        model = "openai/gpt-4o"
-    else:
-        url = "https://api.openai.com/v1/chat/completions"
-        api_key = keys["openai"]
-        model = "gpt-4o"
-    
+    url = "https://api.openai.com/v1/chat/completions"
+    api_key = keys.get("openai")
+    model = "gpt-4o"
+
     if not api_key:
         return "Error: No API Key found."
     
@@ -122,8 +108,8 @@ def call_ai(text, keys):
 
 def main():
     keys = get_api_keys()
-    if not keys["openai"] and not keys["openrouter"]:
-        print("Error: OpenAI or OpenRouter Key not found.")
+    if not keys["openai"]:
+        print("Error: OpenAI Key not found.")
         sys.exit(1)
         
     # Fetch from Web App
