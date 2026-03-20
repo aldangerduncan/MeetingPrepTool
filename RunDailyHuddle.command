@@ -162,26 +162,6 @@ cat <<EOF > "$HTML_FILE"
       color: #b05d13;
     }
 
-    .remind-btn {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-
-    .remind-btn:hover {
-      opacity: 0.8;
-    }
-
-    .remind-btn.done {
-      background: #27ae60;
-      cursor: default;
-    }
   </style>
 </head>
 
@@ -212,29 +192,6 @@ $EMAIL_INSIGHTS
 
   </div>
 
-  <script>
-    async function scheduleReminder(email, name, time, meetUrl, btn) {
-      if (btn.classList.contains('done')) return;
-      btn.textContent = '...';
-      const webAppUrl = "$WEB_APP_URL";
-      const params = new URLSearchParams({
-        action: 'schedule',
-        email: email,
-        name: name,
-        time: time,
-        meetUrl: meetUrl
-      });
-
-      try {
-        await fetch(webAppUrl + '?' + params.toString(), { mode: 'no-cors' });
-        btn.textContent = 'Scheduled ✅';
-        btn.classList.add('done');
-      } catch (err) {
-        console.error(err);
-        btn.textContent = 'Error';
-      }
-    }
-  </script>
 </body>
 </html>
 EOF

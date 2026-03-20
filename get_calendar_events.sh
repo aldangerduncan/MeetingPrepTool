@@ -31,20 +31,12 @@ fi
 echo "$RESPONSE" | jq -r --arg today "$TODAY_STR" --arg label "$LABEL" '
   def html_item:
     "<div class=\"calendar-item\">
-       <div style=\"display:flex; justify-content:space-between; align-items:center;\">
-         <div>
-           <div class=\"calendar-time\">" + .shortDate + "</div>
-           <div><strong>" + .title + "</strong></div>
-           <div class=\"calendar-meta\">With: " + (.attendees | join(", ")) + "</div>
-         </div>" +
-       (if .googleMeetUrl != "" and (.shortDate | startswith($today)) then
-          "<div>
-             <a href=\"https://script.google.com/macros/s/AKfycbxhH0lpZ3tq6KZovVQV8UpJubi74EloknJRQzYfDiV7yfAr585sdw_OGNPzCMkzjAlG/exec?action=schedule&email=" + (.attendees[0] // "") + "&name=" + (.title | @uri) + "&title=" + (.title | @uri) + "&time=" + (.timeOnly | @uri) + "&meetUrl=" + (.googleMeetUrl | @uri) + "\" target=\"_blank\" style=\"background:#2980b9; color:white; padding:6px 12px; border-radius:4px; text-decoration:none; font-size:12px; display:inline-block;\">
-               🔔 Remind
-             </a>
-           </div>"
+       <div class=\"calendar-time\">" + .shortDate + "</div>
+       <div><strong>" + .title + "</strong></div>
+       <div class=\"calendar-meta\">With: " + (.attendees | join(", ")) + "</div>" +
+       (if .googleMeetUrl != "" then
+          "<div class=\"calendar-meta\"><a href=\"" + .googleMeetUrl + "\" target=\"_blank\">Join Meeting</a></div>"
         else "" end) + "
-       </div>
      </div>";
 
   (.events | map(select(.shortDate | startswith($today) | not))) as $yesterday

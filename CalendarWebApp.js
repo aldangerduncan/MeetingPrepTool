@@ -1,13 +1,9 @@
 function doGet(e) {
-    const action = e.parameter.action || 'calendar';
+    e = e || {};
+    const action = (e.parameter || {}).action || 'calendar';
 
     if (action === 'email') {
         return getEmail();
-    } else if (action === 'schedule') {
-        return scheduleReminder(e.parameter);
-    } else if (action === 'trigger') {
-        // This could be called manually or by a time trigger
-        return triggerReminders();
     } else {
         return getCalendar();
     }
@@ -24,11 +20,6 @@ function doPost(e) {
             const recipient = "alex.sheath@irdgroup.com.au";
             GmailApp.sendEmail(recipient, subject, "Please view the HTML content.", { htmlBody: htmlBody });
             return ContentService.createTextOutput("Email Sent");
-        }
-
-        // Handle reminder scheduling via POST
-        if (data.action === 'schedule') {
-            return scheduleReminder(data);
         }
 
         return ContentService.createTextOutput("Action not recognized");
@@ -82,7 +73,7 @@ function getCalendar() {
             timeOnly: Utilities.formatDate(evt.getStartTime(), Session.getScriptTimeZone(), "HH:mm"),
             attendees: evt.getGuestList().map(g => g.getEmail()),
             colorId: evt.getColor() || "default",
-            googleMeetUrl: getMeetLink_(evt, calendarId),
+            googleMeetUrl: getMeetingUrl_(evt, calendarId),
             location: evt.getLocation() || "",
             description: evt.getDescription() || ""
         };
@@ -99,9 +90,6 @@ function getCalendar() {
 }
 
 function getCreatedEventsStats_(calendarId, start, end, skipTitles) {
-    // Uses Advanced Calendar Service to find events created in the window (meetings booked)
-    // updatedMin catches events touched; we assume created >= start.
-
     let createdCount = 0;
     let createdList = [];
 
@@ -154,18 +142,23 @@ function getCreatedEventsStats_(calendarId, start, end, skipTitles) {
     return { createdCount: createdCount, createdList: createdList };
 }
 
-function getMeetLink_(evt, calendarId) {
-    // 1. Check Location & Description (Fallback for pasted links)
-    const meetRegex = /https:\/\/meet\.google\.com\/[a-z\-]+/i;
+/**
+ * Returns the best meeting URL from an event: Google Meet, Teams, or empty string.
+ */
+function getMeetingUrl_(evt, calendarId) {
     const loc = evt.getLocation() || "";
     const desc = evt.getDescription() || "";
+    const combined = loc + " " + desc;
 
-    let match = loc.match(meetRegex);
-    if (!match) match = desc.match(meetRegex);
-    if (match) return match[0];
+    // Google Meet
+    const meetMatch = combined.match(/https:\/\/meet\.google\.com\/[a-z\-]+/i);
+    if (meetMatch) return meetMatch[0];
 
-    // 2. Try Advanced Calendar Service (For native Meet links)
-    // REQUIRES: "Calendar API" service enabled in Apps Script
+    // Microsoft Teams
+    const teamsMatch = combined.match(/https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s"<>]+/i);
+    if (teamsMatch) return teamsMatch[0];
+
+    // Fallback: Calendar API hangoutLink
     try {
         const eventId = evt.getId().split('@')[0];
         const fullEvent = Calendar.Events.get(calendarId, eventId);
@@ -175,142 +168,145 @@ function getMeetLink_(evt, calendarId) {
             if (videoEntry) return videoEntry.uri;
         }
     } catch (e) {
-        // Fallback or log if Calendar API is not enabled
-        Logger.log("Advanced Calendar Service not enabled or error: " + e.message);
+        Logger.log("Calendar API error in getMeetingUrl_: " + e.message);
     }
 
-    return "";
+    return ""; // Face-to-face or phone — no link
 }
 
 /**
- * Reminders Logic
+ * Automatic Reminder System
+ * -------------------------
+ * Run setupAutoReminders() once from the Apps Script editor to activate.
+ * After that, checkCalendarForReminders() fires every minute on Google's servers
+ * — no action required on your laptop.
  */
 
-function scheduleReminder(params) {
-    const ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.create("Meeting Reminders");
-    let sheet = ss.getSheetByName("SheetOne");
-    if (!sheet) {
-        sheet = ss.insertSheet("SheetOne");
-        sheet.appendRow(["Recipient", "First", "TimeScheduled", "GoogleMeetURL", "Email Sent", "Status", "Title"]);
-    }
-
-    const data = sheet.getDataRange().getValues();
-    // Check if this meeting (recipient + time) is already scheduled and NOT yet sent
-    const alreadyExists = data.some(row =>
-        row[0] === params.email &&
-        row[2] == params.time && // Uses == for loose comparison if types differ
-        row[4] === ''
-    );
-
-    if (alreadyExists) {
-        return ContentService.createTextOutput("Reminder already exists for " + params.email);
-    }
-
-    // params: email, name, time, meetUrl, title
-    sheet.appendRow([
-        params.email,
-        params.name.split(' ')[0],
-        params.time,
-        params.meetUrl,
-        '',
-        'Scheduled',
-        params.title // New Title column for live verification
-    ]);
-
-    // Ensure a minute-by-minute trigger is set up
-    setupTrigger_();
-
-    return ContentService.createTextOutput("Reminder Scheduled for " + params.email);
+function setupAutoReminders() {
+    // Remove any existing reminder triggers to avoid duplicates
+    ScriptApp.getProjectTriggers()
+        .filter(t => ['triggerReminders', 'checkCalendarForReminders'].includes(t.getHandlerFunction()))
+        .forEach(t => ScriptApp.deleteTrigger(t));
+    ScriptApp.newTrigger('checkCalendarForReminders').timeBased().everyMinutes(1).create();
+    Logger.log('Auto reminder trigger created. Reminders will fire 5 minutes before meetings where you are the organiser.');
 }
 
-function setupTrigger_() {
-    const triggers = ScriptApp.getProjectTriggers();
-    if (triggers.some(t => t.getHandlerFunction() === 'triggerReminders')) return;
-    ScriptApp.newTrigger('triggerReminders').timeBased().everyMinutes(1).create();
-}
+function checkCalendarForReminders() {
+    const calendarId = 'alex.sheath@irdgroup.com.au';
+    const now = new Date();
 
-/**
- * Core Mail Merge Logic (Based on user script)
- */
-function triggerReminders() {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    if (!ss) return;
-    const sheet = ss.getSheetByName("SheetOne");
-    if (!sheet) return;
+    // Window: 3–7 minutes from now — reliably catches the 5-minute mark within a 1-min polling cycle
+    const windowStart = new Date(now.getTime() + 3 * 60000);
+    const windowEnd   = new Date(now.getTime() + 7 * 60000);
 
-    const subjectLine = "Today's catch up with Alex from Prospector";
+    const calendar = CalendarApp.getCalendarById(calendarId);
+    if (!calendar) return;
+
+    const events = calendar.getEvents(windowStart, windowEnd);
+    if (events.length === 0) return;
+
     let emailTemplate;
     try {
-        emailTemplate = getGmailTemplateFromDrafts_(subjectLine);
+        emailTemplate = getGmailTemplateFromDrafts_("Today's catch up with Alex from Prospector");
     } catch (e) {
-        Logger.log(e.message);
-        return ContentService.createTextOutput(e.message);
+        Logger.log('Reminder template not found: ' + e.message);
+        return;
     }
 
-    const dataRange = sheet.getDataRange();
-    const data = dataRange.getDisplayValues();
-    const heads = data.shift();
+    events.forEach(evt => {
+        try {
+            // Only send if Alex is the organiser
+            const eventId = evt.getId().split('@')[0];
+            const fullEvent = Calendar.Events.get(calendarId, eventId);
+            const organiserEmail = (fullEvent.organizer || {}).email || '';
+            if (organiserEmail.toLowerCase() !== calendarId.toLowerCase()) return;
 
-    const RECIPIENT_COL = heads.indexOf("Recipient");
-    const FIRST_COL = heads.indexOf("First");
-    const TIME_COL = heads.indexOf("TimeScheduled");
-    const MEET_COL = heads.indexOf("GoogleMeetURL");
-    const SENT_COL = heads.indexOf("Email Sent");
+            const meetUrl = getMeetingUrl_(evt, calendarId);
+            const startTime = Utilities.formatDate(evt.getStartTime(), Session.getScriptTimeZone(), "HH:mm");
 
-    const now = new Date();
-    const out = [];
+            evt.getGuestList().forEach(guest => {
+                const recipientEmail = guest.getEmail();
+                if (!recipientEmail || recipientEmail.toLowerCase() === calendarId.toLowerCase()) return;
 
-    data.forEach(function (row, rowIdx) {
-        let outputVal = row[SENT_COL];
+                if (isAlreadySent_(recipientEmail, evt.getStartTime())) return;
 
-        if (row[SENT_COL] === '' && row[RECIPIENT_COL] !== '') {
-            const scheduledTimeStr = row[TIME_COL];
-            const meetUrl = row[MEET_COL];
+                const guestName = guest.getName() || '';
+                const firstName = guestName ? guestName.split(' ')[0] : recipientEmail.split('@')[0];
 
-            // Only send if Google Meet URL exists
-            if (scheduledTimeStr && meetUrl && meetUrl !== "") {
-                const [hours, minutes] = scheduledTimeStr.split(':').map(Number);
-                const scheduledTime = new Date();
-                scheduledTime.setHours(hours, minutes, 0, 0);
+                const rowData = {
+                    Recipient: recipientEmail,
+                    First: firstName,
+                    TimeScheduled: startTime,
+                    GoogleMeetURL: meetUrl,
+                    Title: evt.getTitle()
+                };
 
-                const diffMinutes = (scheduledTime.getTime() - now.getTime()) / 60000;
+                const msgObj = fillInTemplateFromObject_(emailTemplate.message, rowData);
+                GmailApp.sendEmail(recipientEmail, msgObj.subject, msgObj.text, {
+                    htmlBody: msgObj.html,
+                    attachments: emailTemplate.attachments,
+                    inlineImages: emailTemplate.inlineImages
+                });
 
-                // Send if within 6 minutes of meeting (to catch the 5 min window)
-                if (diffMinutes <= 6 && diffMinutes >= 0) {
-                    // LIVE CHECK: Verify meeting still exists on Calendar
-                    const calendar = CalendarApp.getCalendarById('alex.sheath@irdgroup.com.au');
-                    const liveEvents = calendar.getEvents(scheduledTime, new Date(scheduledTime.getTime() + 60000));
-                    const stillExists = liveEvents.some(e => e.getTitle() === row[heads.indexOf("Title")] || e.getGuestList().some(g => g.getEmail() === row[RECIPIENT_COL]));
-
-                    if (!stillExists) {
-                        outputVal = "Cancelled/Moved";
-                    } else {
-                        try {
-                            const rowObj = {};
-                            heads.forEach((h, i) => rowObj[h] = row[i]);
-
-                            const msgObj = fillInTemplateFromObject_(emailTemplate.message, rowObj);
-                            GmailApp.sendEmail(row[RECIPIENT_COL], msgObj.subject, msgObj.text, {
-                                htmlBody: msgObj.html,
-                                attachments: emailTemplate.attachments,
-                                inlineImages: emailTemplate.inlineImages
-                            });
-                            outputVal = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm");
-                        } catch (e) {
-                            outputVal = "Error: " + e.message;
-                        }
-                    }
-                }
-            }
+                logSent_(recipientEmail, firstName, evt.getStartTime(), meetUrl, evt.getTitle());
+                Logger.log('Reminder sent to ' + recipientEmail + ' for: ' + evt.getTitle() + ' at ' + startTime);
+            });
+        } catch (e) {
+            Logger.log('Error processing event "' + evt.getTitle() + '": ' + e.message);
         }
-        out.push([outputVal]);
     });
-
-    if (out.length > 0) {
-        sheet.getRange(2, SENT_COL + 1, out.length, 1).setValues(out);
-    }
-    return ContentService.createTextOutput("Reminders Processed");
 }
+
+/**
+ * Returns the log sheet, creating the spreadsheet on first run and persisting
+ * its ID via PropertiesService (required since getActiveSpreadsheet() is null
+ * when called from a time-based trigger).
+ */
+function getOrCreateLogSheet_() {
+    const props = PropertiesService.getScriptProperties();
+    let ssId = props.getProperty('REMINDER_SS_ID');
+    let ss;
+    if (ssId) {
+        try { ss = SpreadsheetApp.openById(ssId); } catch(e) { ssId = null; }
+    }
+    if (!ss) {
+        ss = SpreadsheetApp.create('Meeting Reminders');
+        props.setProperty('REMINDER_SS_ID', ss.getId());
+    }
+    let sheet = ss.getSheetByName('Log');
+    if (!sheet) {
+        sheet = ss.insertSheet('Log');
+        sheet.appendRow(["Recipient", "First", "MeetingTime", "MeetingTitle", "GoogleMeetURL", "SentAt"]);
+    }
+    return sheet;
+}
+
+function isAlreadySent_(email, meetingStart) {
+    const sheet = getOrCreateLogSheet_();
+    const data = sheet.getDataRange().getValues();
+    const startStr = meetingStart.toISOString().substring(0, 16); // "YYYY-MM-DDTHH:MM"
+    return data.some(row =>
+        row[0] === email &&
+        String(row[2] instanceof Date ? row[2].toISOString() : row[2]).substring(0, 16) === startStr &&
+        row[5] !== ''
+    );
+}
+
+function logSent_(email, firstName, meetingStart, meetUrl, title) {
+    const sheet = getOrCreateLogSheet_();
+    sheet.appendRow([
+        email,
+        firstName,
+        meetingStart,
+        title,
+        meetUrl,
+        Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm")
+    ]);
+}
+
+/**
+ * Mail merge helpers (unchanged)
+ */
 
 function getGmailTemplateFromDrafts_(subject_line) {
     const drafts = GmailApp.getDrafts();
@@ -355,4 +351,3 @@ function escapeData_(str) {
         .replace(/[\r]/g, '\\r')
         .replace(/[\t]/g, '\\t');
 }
-
