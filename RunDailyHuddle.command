@@ -11,8 +11,8 @@ FM_STATS=$(./fm_stats.sh)
 # 3. Get Calendar Events (AppleScript)
 CAL_EVENTS=$(./get_calendar_events.sh)
 
-# 4. Get Email Insights (AI)
-EMAIL_INSIGHTS=$(python3 analyze_email.py)
+# 4. Get Prospector Insights (AI)
+EMAIL_INSIGHTS=$(python3 analyze_prospector_insights.py)
 
 # 5. Build HTML Report
 STATS_LABEL="Yesterday’s Stats"
@@ -186,7 +186,7 @@ $CAL_EVENTS
     </div>
 
     <div class="card">
-      <h2>Email Insights</h2>
+      <h2>Prospector Insights</h2>
 $EMAIL_INSIGHTS
     </div>
 
