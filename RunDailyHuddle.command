@@ -11,8 +11,8 @@ FM_STATS=$(./fm_stats.sh)
 # 3. Get Calendar Events (AppleScript)
 CAL_EVENTS=$(./get_calendar_events.sh)
 
-# 4. Get Prospector Insights (AI)
-EMAIL_INSIGHTS=$(python3 analyze_prospector_insights.py)
+# 4. Get Prospector Insights (AI via VPS)
+EMAIL_INSIGHTS=$(curl -sk --max-time 120 "https://74.208.72.121/daily-insights")
 
 # 5. Build HTML Report
 STATS_LABEL="Yesterday’s Stats"
