@@ -13,13 +13,13 @@ fi
 
 echo "--- Cloud Meeting Prep ---"
 echo "Target: $QUERY"
-echo "Connecting to VPS (74.208.72.121)..."
+echo "Connecting to VPS (216.250.118.221)..."
 echo "(Please enter your VPS Password if asked)"
 
 # 2. Run Remote Command
 # -t forces a pseudo-terminal so sudo/password prompts work if needed (though usually ssh passes auth before command)
 # We change directory to ensuring finding the script and keys
-ssh -t root@74.208.72.121 "cd /root/MeetingPrep && ./email_meeting_prep.sh \"$QUERY\""
+ssh -t root@216.250.118.221 "cd /root/MeetingPrep && ./email_meeting_prep.sh \"$QUERY\""
 
 echo ""
 echo "--- Done ---"

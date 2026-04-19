@@ -12,7 +12,7 @@ FM_STATS=$(./fm_stats.sh)
 CAL_EVENTS=$(./get_calendar_events.sh)
 
 # 4. Get Prospector Insights (AI via VPS)
-EMAIL_INSIGHTS=$(curl -sk --max-time 120 "https://74.208.72.121/daily-insights")
+EMAIL_INSIGHTS=$(curl -sk --max-time 120 "https://216.250.118.221/daily-insights")
 
 # 5. Build HTML Report
 STATS_LABEL="Yesterday’s Stats"

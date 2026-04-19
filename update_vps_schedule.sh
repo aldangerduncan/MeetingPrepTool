@@ -6,7 +6,7 @@
 # 2. Configure the Cron job for the Meeting Prep Tool (8:00 AM)
 # 3. Run the Meeting Prep tool immediately for today's meetings
 
-HOST="74.208.72.121"
+HOST="216.250.118.221"
 USER="root"
 DIR="MeetingPrep"
 
@@ -29,15 +29,18 @@ ssh -A "$USER@$HOST" "bash -s" <<EOF
     
     # 3. Update Cron Job (Idempotent)
     echo "[VPS] Configuring Cron Job for 8:00 AM..."
-    CRON_CMD="0 8 * * 1-5 cd \$PWD && ./prep_todays_meetings.sh >> /tmp/meeting_prep.log 2>&1"
-    
-    # Check if job already exists to avoid duplicates
+    SCRIPT_DIR=\$(pwd)
+    CRON_CMD="0 8 * * 1-5 cd \$SCRIPT_DIR && ./prep_todays_meetings.sh >> /tmp/meeting_prep.log 2>&1"
+
+    # Replace existing job or add new one
     if crontab -l 2>/dev/null | grep -F "prep_todays_meetings.sh" >/dev/null; then
-        echo "[VPS] Cron job already exists. Skipping."
+        echo "[VPS] Updating existing cron job with correct path..."
+        crontab -l 2>/dev/null | grep -v "prep_todays_meetings.sh" | { cat; echo "\$CRON_CMD"; } | crontab -
     else
         (crontab -l 2>/dev/null; echo "\$CRON_CMD") | crontab -
         echo "[VPS] Cron job added."
     fi
+    echo "[VPS] Cron entry: \$CRON_CMD"
     
     # 4. Run Immediately
     echo "[VPS] Executing Meeting Prep for Today..."
