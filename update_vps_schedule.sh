@@ -35,17 +35,14 @@ ssh -A "$USER@$HOST" "bash -s" <<EOF
     # 3. Update Cron Job (Idempotent)
     echo "[VPS] Configuring Cron Job for 8:00 AM..."
     SCRIPT_DIR=\$(pwd)
-    CRON_CMD="0 8 * * 1-5 cd \$SCRIPT_DIR && ./prep_todays_meetings.sh >> /tmp/meeting_prep.log 2>&1"
+    HUDDLE_CMD="30 7 * * 1-5 cd \$SCRIPT_DIR && ./RunDailyHuddle.command >> /tmp/daily_huddle.log 2>&1"
+    PREP_CMD="0 8 * * 1-5 cd \$SCRIPT_DIR && ./prep_todays_meetings.sh >> /tmp/meeting_prep.log 2>&1"
 
-    # Replace existing job or add new one
-    if crontab -l 2>/dev/null | grep -F "prep_todays_meetings.sh" >/dev/null; then
-        echo "[VPS] Updating existing cron job with correct path..."
-        crontab -l 2>/dev/null | grep -v "prep_todays_meetings.sh" | { cat; echo "\$CRON_CMD"; } | crontab -
-    else
-        (crontab -l 2>/dev/null; echo "\$CRON_CMD") | crontab -
-        echo "[VPS] Cron job added."
-    fi
-    echo "[VPS] Cron entry: \$CRON_CMD"
+    # Rebuild crontab cleanly (remove old entries, add fresh ones)
+    crontab -l 2>/dev/null | grep -v "RunDailyHuddle\|prep_todays_meetings" | { cat; echo "\$HUDDLE_CMD"; echo "\$PREP_CMD"; } | crontab -
+    echo "[VPS] Cron entries:"
+    echo "  \$HUDDLE_CMD"
+    echo "  \$PREP_CMD"
     
     # 4. Run Immediately
     echo "[VPS] Executing Meeting Prep for Today..."
