@@ -12,7 +12,12 @@ WEB_APP_URL="https://script.google.com/macros/s/AKfycbxhH0lpZ3tq6KZovVQV8UpJubi7
 if [ -f "$TOKEN_FILE" ]; then
     TOKEN=$(cat "$TOKEN_FILE")
     # FileMaker tokens expire in 15 mins. If older than 10 mins (600s), refresh.
-    TOKEN_AGE=$(($(date +%s) - $(stat -f %m "$TOKEN_FILE")))
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        FILE_MTIME=$(stat -f %m "$TOKEN_FILE")
+    else
+        FILE_MTIME=$(stat -c %Y "$TOKEN_FILE")
+    fi
+    TOKEN_AGE=$(($(date +%s) - FILE_MTIME))
     if [ "$TOKEN_AGE" -gt 600 ]; then
         echo "[*] Token is old (${TOKEN_AGE}s). Refreshing..."
         if ! ./get_token.sh; then
