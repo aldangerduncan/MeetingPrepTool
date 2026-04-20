@@ -58,18 +58,36 @@ Three files must be present in the working directory but are excluded from versi
 
 ## Deploying / Updating the VPS
 
-From your local machine (inside the repo directory):
+Every push to `main` automatically deploys to the VPS via the GitHub Action in `.github/workflows/deploy.yml`. The action SSHes into the VPS and runs `git pull origin main`.
+
+To trigger a deploy manually without making a code change:
+```bash
+gh workflow run "Deploy to VPS" --repo aldangerduncan/MeetingPrepTool
+```
+
+### First-time VPS setup
+
+If setting up a new VPS, run this once from your local machine to configure the timezone, cron schedule, and sync secrets:
 
 ```bash
 ./update_vps_schedule.sh
 ```
 
 This will:
-1. Copy secrets to the VPS
+1. Copy secrets (`.fm_creds`, `.openai_key`, `.apify_key`) to the VPS
 2. Pull the latest code from GitHub
 3. Set the VPS timezone to `Australia/Sydney`
 4. Rebuild the cron schedule
 5. Run `prep_todays_meetings.sh` immediately as a smoke test
+
+### GitHub Action secrets required
+
+| Secret | Value |
+|--------|-------|
+| `VPS_HOST` | VPS IP address |
+| `VPS_USER` | `root` |
+| `VPS_SSH_KEY` | Private SSH key (public key must be in VPS `~/.ssh/authorized_keys`) |
+| `VPS_REPO_PATH` | Path to repo on VPS (e.g. `/root/MeetingPrep`) |
 
 ---
 
