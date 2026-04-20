@@ -18,6 +18,11 @@ echo "[Local] Copying credentials to VPS..."
 scp .fm_creds .openai_key .apify_key "$USER@$HOST:$DIR/" 2>/dev/null || echo "[!] Warning: Some credential files could not be copied (they may not exist locally)."
 
 ssh -A "$USER@$HOST" "bash -s" <<EOF
+    # 0. Set Timezone
+    echo "[VPS] Setting timezone to Australia/Sydney..."
+    timedatectl set-timezone Australia/Sydney
+    echo "[VPS] Current time: \$(date)"
+
     # 1. Update Code
     echo "[VPS] Updating Codebase..."
     cd $DIR || exit 1
