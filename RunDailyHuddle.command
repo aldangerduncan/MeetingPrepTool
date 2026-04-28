@@ -17,6 +17,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 else
     EMAIL_INSIGHTS=$(curl -s --max-time 120 "http://127.0.0.1/daily-insights")
 fi
+if echo "$EMAIL_INSIGHTS" | grep -qi "error\|500\|502\|bad gateway"; then
+    EMAIL_INSIGHTS='<div class="insight">No insights published yesterday.</div>'
+fi
 
 # 5. Build HTML Report
 STATS_LABEL="Yesterday’s Stats"
