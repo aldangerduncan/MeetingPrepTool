@@ -112,9 +112,17 @@ API_URL="https://api.openai.com/v1/chat/completions"
 AUTH="Authorization: Bearer $OPENAI_KEY"
 MODEL="gpt-4o"
 
-JSON_INPUT=$(jq -n --arg sys "$SYSTEM_PROMPT" --arg model "$MODEL" '{model: $model, messages: [{role: "system", content: $sys}], response_format: {type: "json_object"}}')
+USER_PROMPT="Please provide the strategic briefing for $NAME from $COMPANY as described."
+
+JSON_INPUT=$(jq -n --arg sys "$SYSTEM_PROMPT" --arg user "$USER_PROMPT" --arg model "$MODEL" '{model: $model, messages: [{role: "system", content: $sys}, {role: "user", content: $user}], response_format: {type: "json_object"}}')
 AI_RESPONSE=$(curl -s -X POST "$API_URL" -H "Content-Type: application/json" -H "$AUTH" -d "$JSON_INPUT")
 AI_JSON=$(echo "$AI_RESPONSE" | jq -r '.choices[0].message.content')
+
+if [ "$AI_JSON" == "null" ] || [ -z "$AI_JSON" ]; then
+    echo "[-] OpenAI call failed:" >&2
+    echo "$AI_RESPONSE" >&2
+    exit 1
+fi
 
 # 6. Generate Pretty HTML
 FILENAME="Key_Contact_${NAME// /_}_$(date +%s).html"
