@@ -19,6 +19,16 @@ fi
 # 1. Keys & Tokens
 if [ -f "$TOKEN_FILE" ]; then TOKEN=$(cat "$TOKEN_FILE"); else ./get_token.sh; TOKEN=$(cat "$TOKEN_FILE"); fi
 OPENAI_KEY=$(cat "$OPENAI_KEY_FILE" 2>/dev/null)
+if [ -z "$OPENAI_KEY" ]; then
+    OPENAI_KEY=$(cat "$HOME/.openai_key" 2>/dev/null)
+fi
+if [ -z "$OPENAI_KEY" ]; then
+    OPENAI_KEY=$(find "$HOME/Antigravity" -maxdepth 3 -name ".openai_key" 2>/dev/null | head -1 | xargs cat 2>/dev/null)
+fi
+if [ -z "$OPENAI_KEY" ]; then
+    echo "[-] Error: OpenAI key not found." >&2
+    exit 1
+fi
 
 # 2. FileMaker Search
 encoded_db=$(echo "$DATABASE" | jq -Rr @uri)
