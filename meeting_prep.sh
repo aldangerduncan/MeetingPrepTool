@@ -168,11 +168,7 @@ else
     INTERACTION_TEXT="Found $count recent interactions."
 fi
 
-echo "<p><strong>MEETING PREPARATION BRIEF: $NAME</strong></p>"
-echo "<p>Subject: $NAME$DISPLAY_COMPANY</p>"
-echo "<p>LinkedIn: $LINKEDIN</p>"
-echo "<p>Context: $CLIENT_STATUS ($PRODUCT) $INTERACTION_TEXT</p>"
-echo ""
+echo "[*] Brief: $NAME ($DISPLAY_COMPANY) — $CLIENT_STATUS ($PRODUCT) — $INTERACTION_TEXT" >&2
 
     # Prepare content for both display and LLM
     FULL_CONTEXT=""
@@ -194,10 +190,9 @@ echo ""
     rm -f "$TEMP_CONTEXT_FILE"
 
     if [ -n "$OPENAI_KEY" ]; then
-        echo "Generating Smart Summary (powered by OpenAI)..."
-        echo "(This might take a few seconds)"
-        echo ""
-        
+        echo "[*] Generating brief via OpenAI..." >&2
+
+
         # Load Knowledge Base
         # Use relative path since we are in the same dir
         KNOWLEDGE_BASE_FILE="./knowledge_base.txt"
@@ -239,13 +234,10 @@ echo ""
         fi
 
         # Construct the prompt
-        SYSTEM_PROMPT="You are preparing a commercial meeting brief for an Account Director at 'Prospector', a B2B intent intelligence platform.
-
-Do NOT write a generic CRM summary. Write something useful for a sales meeting.
+        SYSTEM_PROMPT=$(cat <<EOF
+You are preparing a commercial meeting brief for an Account Director at 'Prospector', a B2B intent intelligence platform.
 
 Be commercial, not academic. Avoid generic statements. Focus on how the company makes money, wins clients, sells to brands or agencies, and where Prospector can help create commercial advantage. Think like a sales leader, not a marketer.
-
-The final output should feel like something the Account Director can actually use in a meeting tomorrow.
 
 === KNOWLEDGE BASE START ===
 $KNOWLEDGE_BASE_CONTENT
@@ -260,25 +252,117 @@ CONTEXT FOR THIS MEETING:
 
 CORE RULES:
 - Use only the CRM dialogue you are given. Do not guess.
-- If something is not available in the CRM dialogue, write 'not found in CRM'.
-- Be direct and specific. No padding. No generic SaaS language. No academic summaries.
-- Do not overstate certainty. If something is inferred from limited evidence, label it as an inference.
-- Prioritise practical usefulness over completeness.
+- If something is not in the CRM dialogue, set the value to "Not found in CRM".
+- Be direct and specific. No padding. No generic SaaS language.
+- Do not overstate certainty. Label inferences as inferences.
+- Plain text only in field values — no HTML, no markdown, no asterisks, no bullet characters.
 
 OUTPUT FORMAT (strict):
-- Use HTML only. No markdown.
-- Use <h3> for each numbered section heading.
-- Use <p> for paragraphs, <ul>/<li> for lists, <strong> for emphasis.
-- Do NOT use <h1> or <h2> (those are reserved for the email shell).
-- Begin the response immediately with section 1 — no preamble, no greeting."
+Return a single JSON object that exactly matches this schema. No preamble, no closing remarks, no code fences — just the JSON object.
 
-        USER_PROMPT="Here is the dialogue history from CRM:\n\n$FULL_CONTEXT\n\n----------------\n\nContact Details:\nName: $NAME\nCompany: $COMPANY\nLinkedIn: $LINKEDIN\nClient Status: $CLIENT_STATUS\nProduct: $PRODUCT\nProspect Flag: $PROSPECT_FLAG\n\nProduce the brief using exactly these 12 sections in this order:\n\n1. Meeting snapshot — Company; Contact; Meeting type; Account lifecycle stage; Current relationship status; Main commercial risk; Main commercial opportunity.\n\n2. Commercial read — A short, blunt interpretation of what this meeting is really about commercially. Explain why it is happening, what the person probably cares about commercially, how the company makes money or wins clients, where Prospector may or may not fit, and what risk/blocker/objection needs to be confronted. AVOID vague statements like 'they need relevant insights', 'timing is important' or 'ask about their priorities'.\n\n3. Account lifecycle — Current status (former / active / renewal / reactivation / expansion / switch-off risk); how long they have used Prospector if known; why they originally bought if known; why they renewed, paused, churned or switched off; what stage this meeting represents; any important renewal/cancellation/reactivation context.\n\n4. Stakeholder map — Separate people by commercial role, not just name. Cover: Main contact; Decision-maker; Economic buyer; Daily users; Champion; Blocker / sceptic; Missing stakeholders; Other internal names mentioned in CRM; What each person appears to care about. If a role is unclear, say 'not found in CRM'.\n\n5. Brand and vertical appetite — Types of brands they usually care about; specific brands mentioned; verticals they sell into; target categories; trigger types that matter to them; whether they care about enterprise, challenger, retail, FMCG, sport, agencies, not-for-profits or other categories; signs of brands they are trying to win, retain or grow. Turn vague statements into commercial detail.\n\n6. Agency / buying-path intelligence — Do they sell direct to brands, via agencies, or both? Do they work with an agency patch? Which agencies are mentioned? Are the agencies HoldCo / network, independents, direct advertisers or unknown? Are they focused on Tier 1 agencies, independents, direct advertisers or a mix? Are they chasing new business, existing clients or expansion within known relationships? Does the buying path change how Prospector should be positioned? If agency type is not clear, say 'not found in CRM'.\n\n7. Region or patch focus — Geographic focus; state / city / national patch; agency patch; brand category patch; new business patch; existing client patch; any territory ownership mentioned in CRM. If not found, say 'not found in CRM'.\n\n8. Prospector value evidence — Classify the evidence, do not just summarise it. Cover: Evidence of value; evidence of poor adoption; features that worked; features that did not land; specific use cases mentioned; specific wins or near-wins; what the account previously cared about; what appears to have blocked value; whether the issue appears to be relevance, workflow, adoption, budget, timing, stakeholder buy-in or unclear commercial outcomes.\n\n9. Recommended meeting angle — How to open the meeting; the main commercial point to make; what issue to confront directly; what NOT to overclaim; what to show; what outcome to push for; how to position Prospector for THIS specific account.\n\n10. Proof points to bring — Specific brand examples to mention; specific agency examples to mention; relevant trigger examples; suggested searches to run live; suggested alerts to recommend; similar client use cases if available; any evidence from CRM that supports the examples. If no specific examples are available, say 'not found in CRM' and suggest the type of example that would be useful.\n\n11. Practical meeting moves — Do NOT only provide questions. Provide practical meeting moves. Each meeting move must include: Commercial point to make; Evidence from CRM; Question to ask; Example to show (if available); Likely objection; Recommended response. Provide at least three meeting moves.\n\n12. Suggested questions — Every question must be specific to the account and meeting. NO generic questions. For each question, include: Question; Why ask this; What to listen for; Possible follow-up. Provide at least four questions.\n\nReminder: if the CRM dialogue does not contain the information for a sub-bullet, write 'not found in CRM' rather than guessing. Begin with section 1 immediately, no preamble."
+{
+  "subtitle": "<Company> · <Meeting type label>",
+  "meta": {
+    "lifecycle": "<e.g. Active · Renewal | Lapsed · Reactivation | Active · Expansion | Onboarding>",
+    "renewal_due": "<e.g. Nov 2026 — extract from dialogue, or '—' if unknown>",
+    "status_label": "<e.g. Active Connector | Lapsed | Onboarding | Renewal Pending>"
+  },
+  "snapshot": [
+    {"label": "Company",          "value": "..."},
+    {"label": "Contact",          "value": "..."},
+    {"label": "Meeting type",     "value": "..."},
+    {"label": "Lifecycle stage",  "value": "..."},
+    {"label": "Relationship",     "value": "..."},
+    {"label": "Main risk",        "value": "..."},
+    {"label": "Main opportunity", "value": "..."}
+  ],
+  "commercial_read": {
+    "label": "Bottom line",
+    "paragraphs": ["<short blunt para 1>", "<short blunt para 2>"]
+  },
+  "stakeholders": [
+    {"label": "Main contact",          "value": "<name — what they care about>"},
+    {"label": "Decision-maker",        "value": "..."},
+    {"label": "Economic buyer",        "value": "..."},
+    {"label": "Daily users",           "value": "..."},
+    {"label": "Champion",              "value": "..."},
+    {"label": "Sceptic",               "value": "..."},
+    {"label": "Missing stakeholders",  "value": "..."}
+  ],
+  "brand_appetite": {
+    "Brand types":       ["...", "..."],
+    "Verticals":         ["...", "..."],
+    "Target categories": ["..."],
+    "Trigger types":     ["..."]
+  },
+  "agency_buying_path": "<one paragraph covering: direct vs agency, agencies mentioned, HoldCo vs independent, new business vs existing>",
+  "region_focus": [
+    {"label": "Geographic focus",       "value": "..."},
+    {"label": "State / City / National","value": "..."},
+    {"label": "Agency patch",           "value": "..."},
+    {"label": "New business patch",     "value": "..."},
+    {"label": "Existing client patch",  "value": "..."}
+  ],
+  "value_evidence": [
+    {"label": "Evidence of value",        "value": "..."},
+    {"label": "Poor adoption",            "value": "..."},
+    {"label": "Features that worked",     "value": "..."},
+    {"label": "Features that didn't land","value": "..."},
+    {"label": "Specific use cases",       "value": "..."},
+    {"label": "Blocked value reason",     "value": "..."}
+  ],
+  "recommended_angle": {
+    "label": "Open with",
+    "paragraphs": ["<para 1: how to open>", "<para 2: what to confront / what to push for>"]
+  },
+  "proof_points": [
+    {"label": "Brand examples",        "value": "..."},
+    {"label": "Trigger examples",      "value": "..."},
+    {"label": "Suggested searches",    "value": "..."},
+    {"label": "Relevant client cases", "value": "..."}
+  ],
+  "meeting_moves": [
+    {
+      "title": "<short, action-oriented imperative>",
+      "rows": [
+        {"label": "Evidence", "value": "..."},
+        {"label": "Question", "value": "..."},
+        {"label": "Example",  "value": "..."},
+        {"label": "Objection","value": "..."},
+        {"label": "Response", "value": "..."}
+      ]
+    }
+  ]
+}
+
+Provide at least three meeting_moves. Return only the JSON.
+EOF
+)
+
+        USER_PROMPT=$(cat <<EOF
+Here is the dialogue history from CRM (most recent first):
+
+$FULL_CONTEXT
+
+----------------
+
+Contact Details:
+Name: $NAME
+Company: $COMPANY
+LinkedIn: $LINKEDIN
+Client Status: $CLIENT_STATUS
+Product: $PRODUCT
+Prospect Flag: $PROSPECT_FLAG
+
+Return the JSON object now. Use only what is in the CRM dialogue above. Anything not present should be "Not found in CRM".
+EOF
+)
 
         MODEL_ID="gpt-4o"
         API_URL="https://api.openai.com/v1/chat/completions"
         AUTH_HEADER="Authorization: Bearer $OPENAI_KEY"
 
-        # Create JSON payload safely with jq
+        # Create JSON payload safely with jq — request strict JSON output
         JSON_PAYLOAD=$(jq -n \
                   --arg system "$SYSTEM_PROMPT" \
                   --arg user "$USER_PROMPT" \
@@ -288,38 +372,41 @@ OUTPUT FORMAT (strict):
                     messages: [
                       {role: "system", content: $system},
                       {role: "user", content: $user}
-                    ]
+                    ],
+                    response_format: {type: "json_object"}
                   }')
-                  
+
         if [ -z "$JSON_PAYLOAD" ]; then
              echo "[-] Error: JSON Payload for OpenAI is empty. JQ failed?" >&2
-             echo "User Prompt length: ${#USER_PROMPT}" >&2
         fi
 
         SUMMARY_RESPONSE=$(curl -s -X POST "$API_URL" \
              -H "Content-Type: application/json" \
              -H "$AUTH_HEADER" \
-             -H "HTTP-Referer: https://github.com/alexsheath" \
              -d "$JSON_PAYLOAD")
-             
+
         CURL_RET=$?
         if [ $CURL_RET -ne 0 ]; then
              echo "[-] Curl failed with exit code $CURL_RET" >&2
         fi
 
-        # Extract content
-        SUMMARY_TEXT=$(echo "$SUMMARY_RESPONSE" | jq -r '.choices[0].message.content')
-        
-        if [ "$SUMMARY_TEXT" == "null" ] || [ -z "$SUMMARY_TEXT" ]; then
-             echo "[-] Error getting summary from OpenAI:" >&2
+        # Extract JSON content from the AI response
+        AI_JSON=$(echo "$SUMMARY_RESPONSE" | jq -r '.choices[0].message.content')
+
+        if [ "$AI_JSON" == "null" ] || [ -z "$AI_JSON" ]; then
+             echo "[-] Error getting brief from OpenAI:" >&2
              echo "$SUMMARY_RESPONSE" >&2
-             echo "" >&2
-             echo "Falling back to raw log:"
-             echo ""
-             echo "Falling back to raw log:"
-             echo "$FULL_CONTEXT"
+             # Emit a minimal error block so the email still sends
+             echo "<table role=\"presentation\" width=\"640\" style=\"background:#fff; padding:24px; border-radius:8px; border:1px solid #eef0f3;\"><tr><td><div style=\"font-family:'Inter',sans-serif; font-size:14px; color:#c93838; font-weight:600;\">Brief generation failed — OpenAI returned no content for $NAME.</div></td></tr></table>"
         else
-             echo -e "$SUMMARY_TEXT"
+             # Pipe JSON through Python renderer to produce email-safe HTML
+             SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+             echo "$AI_JSON" | python3 "$SCRIPT_DIR/render_brief.py" \
+                  --name "$NAME" \
+                  --company "$COMPANY" \
+                  --interactions "$count recent" \
+                  --status "$CLIENT_STATUS" \
+                  --meeting-intent "$MEETING_INTENT"
         fi
 
     else

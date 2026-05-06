@@ -43,32 +43,34 @@ else
     exit 1
 fi
 
-# HTML Header/Style Template (Part 1)
-HTML_START="<!DOCTYPE html>
-<html lang='en'>
+# Email-safe HTML shell (head + body open). Each brief is self-contained.
+HTML_START='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <head>
-  <meta charset='UTF-8' />
-  <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-  <style>
-    :root { --bg: #f4f6f8; --card: #ffffff; --text: #2c3e50; --muted: #7f8c8d; --accent: #2980b9; --border: #e0e0e0; }
-    body { margin: 0; padding: 32px; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
-    .container { max-width: 900px; margin: 0 auto; }
-    header { margin-bottom: 32px; }
-    h1 { margin: 0; font-size: 2rem; color: var(--text); }
-    .date { color: var(--muted); margin-top: 4px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .card h2 { margin: 0 0 8px 0; font-size: 1.2rem; color: var(--accent); border-bottom: 1px solid #eee; padding-bottom: 8px; }
-    .meta-row { display: flex; gap: 12px; margin-bottom: 16px; font-size: 0.9rem; color: var(--muted); }
-    .badge { padding: 4px 8px; border-radius: 4px; background: #eee; font-weight: 600; font-size: 0.8rem; }
-    .badge.tomato { background: #fadbd8; color: #c0392b; }
-    .badge.grape { background: #e8daef; color: #8e44ad; }
-    .badge.sage { background: #d5f5e3; color: #27ae60; }
-    .content { line-height: 1.6; font-size: 0.95rem; }
-    .content p { margin-bottom: 12px; }
-    .content ul, .content ol { padding-left: 24px; margin-bottom: 16px; }
-    .content li { margin-bottom: 8px; }
-    strong { color: #34495e; }
-  </style>"
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="x-apple-disable-message-reformatting" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<![endif]-->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style type="text/css">
+  body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+  img { -ms-interpolation-mode: bicubic; border: 0; }
+  body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+  @media screen and (max-width: 620px) {
+    .container { width: 100% !important; }
+    .px { padding-left: 20px !important; padding-right: 20px !important; }
+    .meta-cell { display: block !important; width: 100% !important; box-sizing: border-box; border-right: 0 !important; border-bottom: 1px solid #e6e8ec !important; }
+    .meta-cell:last-child { border-bottom: 0 !important; }
+    .kv-label, .kv-value { display: block !important; width: 100% !important; }
+    .move-label, .move-value { display: block !important; width: 100% !important; }
+    h1.brief-h1 { font-size: 28px !important; line-height: 1.15 !important; }
+  }
+</style>'
 
 # 3. Fetch Calendar Events
 echo "[*] Fetching Today's Meetings..."
@@ -105,55 +107,31 @@ for (( i=0; i<MEETING_COUNT; i++ )); do
     
     cat <<EOF > "$MEETING_HTML_FILE"
 $HTML_START
-  <title>Meeting Prep: $M_TITLE</title>
+<title>Meeting Prep: $M_TITLE</title>
 </head>
-<body>
-  <div class='container'>
-    <header>
-      <h1>Meeting Prep: $M_TITLE</h1>
-      <div class="date">$TODAY_FULL at $M_TIME</div>
-    </header>
+<body style="margin:0; padding:0; background-color:#f5f6f8; color:#1a1d21;">
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#f5f6f8;">Meeting prep for $M_TITLE at $M_TIME</div>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#f5f6f8" style="background-color:#f5f6f8;">
+<tr><td align="center" style="padding:32px 16px;">
 EOF
 
-    # Color Logic for Badge
-    TYPE_LABEL="General"
-    CSS_CLASS="badge"
-    if [ "$M_COLOR" == "11" ]; then TYPE_LABEL="Existing Client"; CSS_CLASS="badge tomato"; 
-    elif [ "$M_COLOR" == "3" ]; then TYPE_LABEL="Key Contact"; CSS_CLASS="badge grape";
-    elif [ "$M_COLOR" == "2" ]; then TYPE_LABEL="Onboarding"; CSS_CLASS="badge sage"; fi
-
-    # Loop through attendees for THIS meeting
+    # Loop through attendees for THIS meeting — each brief is self-contained
     IFS=$'\n'
     for ATT_EMAIL in $M_ATTENDEES; do
         ATT_EMAIL=$(echo "$ATT_EMAIL" | tr -d '[:space:]')
         echo "    [*] Preparing Person: $ATT_EMAIL..."
-        
-        # Re-read token in case it was refreshed by a previous iteration or another process
+
+        # Re-read token in case it was refreshed by a previous iteration
         if [ -f "$TOKEN_FILE" ]; then
             TOKEN=$(cat "$TOKEN_FILE")
         fi
 
-        # Run Prep Script
-        RAW_OUTPUT=$(./meeting_prep.sh "$ATT_EMAIL" "$TOKEN" "$OPENAI_KEY" "$M_COLOR")
-        
-        # Clean Output
-        CLEAN_OUTPUT=$(echo "$RAW_OUTPUT" | grep -v "^\*\*\*" | grep -v "^\[\*\]" | grep -v "^\[+\]" | grep -v "^===" | grep -v "Generating Smart" | grep -v "This might take" | grep -v "^Use the text above" | sed 's/^ //g' | perl -pe 's/\*\*(.*?)\*\*/<strong>$1<\/strong>/g')
-        
-        # Add Card to Meeting HTML
-        cat <<EOF >> "$MEETING_HTML_FILE"
-    <div class="card">
-      <h2>Briefing: $ATT_EMAIL</h2>
-      <div class="meta-row">
-        <span class="$CSS_CLASS">$TYPE_LABEL</span>
-        <span>$M_TITLE</span>
-      </div>
-      <div class="content">$CLEAN_OUTPUT</div>
-    </div>
-EOF
+        # meeting_prep.sh returns the rendered brief container HTML on stdout
+        ./meeting_prep.sh "$ATT_EMAIL" "$TOKEN" "$OPENAI_KEY" "$M_COLOR" >> "$MEETING_HTML_FILE"
     done
 
-    # Close and Send Email for THIS Meeting
-    echo "  </div></body></html>" >> "$MEETING_HTML_FILE"
+    # Close email
+    echo "</td></tr></table></body></html>" >> "$MEETING_HTML_FILE"
     
     echo "[*] Sending Email for '$M_TITLE'..."
     HTML_CONTENT=$(cat "$MEETING_HTML_FILE")
