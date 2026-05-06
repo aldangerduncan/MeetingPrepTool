@@ -119,7 +119,7 @@ EOF
     TYPE_LABEL="General"
     CSS_CLASS="badge"
     if [ "$M_COLOR" == "11" ]; then TYPE_LABEL="Existing Client"; CSS_CLASS="badge tomato"; 
-    elif [ "$M_COLOR" == "3" ]; then TYPE_LABEL="New Business"; CSS_CLASS="badge grape"; 
+    elif [ "$M_COLOR" == "3" ]; then TYPE_LABEL="Key Contact"; CSS_CLASS="badge grape";
     elif [ "$M_COLOR" == "2" ]; then TYPE_LABEL="Onboarding"; CSS_CLASS="badge sage"; fi
 
     # Loop through attendees for THIS meeting
