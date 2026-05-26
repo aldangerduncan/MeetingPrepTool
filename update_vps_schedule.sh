@@ -13,9 +13,15 @@ DIR="MeetingPrep"
 echo "--- Connecting to VPS ($HOST) ---"
 echo "You may be asked for your VPS password."
 
-# 0. Sync Secrets
+# 0. Sync Secrets — scp each independently so a missing file does not block the others
 echo "[Local] Copying credentials to VPS..."
-scp .fm_creds .openai_key .apify_key .supabase_dsn "$USER@$HOST:$DIR/" 2>/dev/null || echo "[!] Warning: Some credential files could not be copied (they may not exist locally)."
+for f in .fm_creds .openai_key .apify_key .supabase_dsn; do
+    if [ -f "$f" ]; then
+        scp "$f" "$USER@$HOST:$DIR/"
+    else
+        echo "[!] Skipping $f (not present locally)."
+    fi
+done
 
 ssh -A "$USER@$HOST" "bash -s" <<EOF
     # 0. Set Timezone
