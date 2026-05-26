@@ -15,7 +15,7 @@ echo "You may be asked for your VPS password."
 
 # 0. Sync Secrets
 echo "[Local] Copying credentials to VPS..."
-scp .fm_creds .openai_key .apify_key "$USER@$HOST:$DIR/" 2>/dev/null || echo "[!] Warning: Some credential files could not be copied (they may not exist locally)."
+scp .fm_creds .openai_key .apify_key .supabase_dsn "$USER@$HOST:$DIR/" 2>/dev/null || echo "[!] Warning: Some credential files could not be copied (they may not exist locally)."
 
 ssh -A "$USER@$HOST" "bash -s" <<EOF
     # 0. Set Timezone
@@ -31,6 +31,9 @@ ssh -A "$USER@$HOST" "bash -s" <<EOF
     
     # 2. Set Permissions
     chmod +x *.sh *.command *.py
+
+    # 2b. Ensure Python deps for monday_brands_to_watch.py
+    pip3 install --quiet psycopg2-binary 2>/dev/null || pip3 install --break-system-packages --quiet psycopg2-binary
     
     # 3. Update Cron Job (Idempotent)
     echo "[VPS] Configuring Cron Job for 8:00 AM..."

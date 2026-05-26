@@ -2,6 +2,8 @@
 .fm_creds
 .recent_token
 .apify_key
+.supabase_dsn
+.monday_picks_history.json
 /Logs
 *.log
 *.html

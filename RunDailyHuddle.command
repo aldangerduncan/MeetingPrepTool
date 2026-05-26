@@ -5,6 +5,24 @@
 # 1. Set Working Directory
 cd "$(dirname "$0")" || exit 1
 
+WEB_APP_URL="https://script.google.com/macros/s/AKfycbxhH0lpZ3tq6KZovVQV8UpJubi74EloknJRQzYfDiV7yfAr585sdw_OGNPzCMkzjAlG/exec"
+
+# Monday: replace Daily Huddle with "Brands to Watch" sales-meeting picks
+if [ "$(date +%u)" -eq 1 ]; then
+    echo "[*] Monday — generating Brands to Watch email..."
+    MONDAY_HTML=$(python3 monday_brands_to_watch.py)
+    MONDAY_EXIT=$?
+    if [ $MONDAY_EXIT -ne 0 ] || [ -z "$MONDAY_HTML" ]; then
+        echo "[-] monday_brands_to_watch.py failed (exit $MONDAY_EXIT). Aborting Monday email." >&2
+        exit 1
+    fi
+    MONDAY_SUBJECT="Brands to Watch — $(date '+%-d %b %Y')"
+    MONDAY_PAYLOAD=$(jq -n --arg html "$MONDAY_HTML" --arg subj "$MONDAY_SUBJECT" '{html: $html, subject: $subj}')
+    curl -L -s -X POST -H "Content-Type: application/json" -d "$MONDAY_PAYLOAD" "$WEB_APP_URL" > /dev/null
+    echo "[*] Brands to Watch email sent."
+    exit 0
+fi
+
 # 2. Get Statistics (FileMaker)
 FM_STATS=$(./fm_stats.sh)
 
@@ -213,7 +231,6 @@ fi
 
 # 7. Send Email via Web App
 echo "Sending Report via Email..."
-WEB_APP_URL="https://script.google.com/macros/s/AKfycbxhH0lpZ3tq6KZovVQV8UpJubi74EloknJRQzYfDiV7yfAr585sdw_OGNPzCMkzjAlG/exec"
 
 # Read HTML content safely
 HTML_CONTENT=$(cat "$HTML_FILE")
