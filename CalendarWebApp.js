@@ -17,7 +17,7 @@ function doPost(e) {
         if (data.html) {
             const htmlBody = data.html;
             const subject = data.subject || "Daily Huddle Report";
-            const recipient = "alex.sheath@irdgroup.com.au";
+            const recipient = data.to || "alex.sheath@irdgroup.com.au";
             GmailApp.sendEmail(recipient, subject, "Please view the HTML content.", { htmlBody: htmlBody });
             return ContentService.createTextOutput("Email Sent");
         }

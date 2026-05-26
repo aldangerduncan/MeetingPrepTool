@@ -86,6 +86,26 @@ if [ "$MEETING_COUNT" -eq 0 ]; then
     exit 0
 fi
 
+# Send OTP setup request to client services with all external attendees for today
+EXTERNAL_EMAILS=$(echo "$CAL_JSON" | jq -r --arg today "$TODAY_FULL" '
+    [.events[] | select(.shortDate | startswith($today)) | .attendees[]?]
+    | map(select(contains("irdgroup.com.au") | not))
+    | unique
+    | .[]
+')
+
+if [ -n "$EXTERNAL_EMAILS" ]; then
+    echo "[*] Sending OTP setup request to clientservices@irdgroup.com.au..."
+    OTP_LIST=$(echo "$EXTERNAL_EMAILS" | sed 's|.*|<li>&</li>|' | tr -d '\n')
+    OTP_HTML="<p>Hi guys can please set up a OTP for the following clients I'm due to meet with today:</p><ul>${OTP_LIST}</ul>"
+    OTP_PAYLOAD=$(jq -n \
+        --arg html "$OTP_HTML" \
+        --arg subj "OTP setup request — clients meeting today" \
+        --arg to "clientservices@irdgroup.com.au" \
+        '{html: $html, subject: $subj, to: $to}')
+    curl -L -s -X POST -H "Content-Type: application/json" -d "$OTP_PAYLOAD" "$WEB_APP_URL" > /dev/null
+fi
+
 # Loop through each meeting
 for (( i=0; i<MEETING_COUNT; i++ )); do
     EVT=$(echo "$CAL_JSON" | jq -r --arg today "$TODAY_FULL" --arg i "$i" '[.events[] | select(.shortDate | startswith($today))][$i | tonumber]')
