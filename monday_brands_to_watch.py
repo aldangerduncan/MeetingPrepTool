@@ -62,8 +62,8 @@ Avoid:
 - Anything where the brand has already done the obvious media spend (post-launch, post-campaign)
 
 For each pick, you must return:
-- id: the candidate's id (integer, exactly as given)
-- company: the company name as shown
+- index: the candidate's index (integer in square brackets, e.g. 12 for "[12]") — MUST be one of the indices shown, not a made-up number
+- company: the company name exactly as shown in the candidate row
 - industry: a short human industry label
 - trigger: one short line describing the signal (≤ 12 words)
 - why_this_matters: 2–3 sentences explaining the commercial implication and likely timing
@@ -135,11 +135,11 @@ def fetch_candidates(dsn: str, excluded_companies: set[str]) -> list[dict]:
 
 def call_openai(api_key: str, candidates: list[dict], excluded: list[str]) -> list[dict]:
     lines = []
-    for c in candidates:
+    for idx, c in enumerate(candidates):
         summary = (c.get("insight_summary") or "").strip().replace("\n", " ")[:280]
         industry = c.get("industry") or c.get("company_industry") or ""
         lines.append(
-            f"[{c['id']}] {c['company']} | {industry} | {c['activity_type']} | "
+            f"[{idx}] {c['company']} | {industry} | {c['activity_type']} | "
             f"{c['publication_date']} | {summary}"
         )
     candidate_block = "\n".join(lines)
@@ -180,14 +180,14 @@ def call_openai(api_key: str, candidates: list[dict], excluded: list[str]) -> li
 
 
 def merge_links(picks: list[dict], candidates: list[dict]) -> list[dict]:
-    by_id = {c["id"]: c for c in candidates}
     merged = []
     for p in picks:
-        cid = p.get("id")
-        cand = by_id.get(cid)
+        idx = p.get("index")
+        cand = candidates[idx] if isinstance(idx, int) and 0 <= idx < len(candidates) else None
         if not cand:
-            print(f"[!] LLM returned id {cid} not in candidate list; skipping.", file=sys.stderr)
+            print(f"[!] LLM returned invalid index {idx!r}; skipping.", file=sys.stderr)
             continue
+        p["id"] = cand["id"]
         p["link"] = cand.get("link") or ""
         p["publication_date"] = cand.get("publication_date").isoformat() if cand.get("publication_date") else ""
         merged.append(p)
@@ -282,10 +282,12 @@ def main() -> int:
         return 1
 
     print("[*] Asking GPT-4o for 3 picks...", file=sys.stderr)
-    picks = call_openai(api_key, candidates, excluded)
-    picks = merge_links(picks, candidates)
+    picks = merge_links(call_openai(api_key, candidates, excluded), candidates)
     if len(picks) < 3:
-        print(f"[-] Only {len(picks)} valid picks after id-merge; aborting.", file=sys.stderr)
+        print(f"[!] Only {len(picks)} valid picks; retrying once...", file=sys.stderr)
+        picks = merge_links(call_openai(api_key, candidates, excluded), candidates)
+    if len(picks) < 3:
+        print(f"[-] Only {len(picks)} valid picks after retry; aborting.", file=sys.stderr)
         return 1
 
     print("[*] Rendering HTML...", file=sys.stderr)
