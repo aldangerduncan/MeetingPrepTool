@@ -1,0 +1,79 @@
+{
+  "subtitle": "Network Ten · Renewal Check-in",
+  "meta": {
+    "lifecycle": "Active · Renewal Risk",
+    "renewal_due": "Aug 2026",
+    "status_label": "Active — At Risk"
+  },
+  "snapshot": [
+    {"label": "Company",          "value": "Network Ten"},
+    {"label": "Contact",          "value": "Damien Langley — Head of Agency Sales"},
+    {"label": "Meeting type",     "value": "Renewal Check-in (4 months to renewal)"},
+    {"label": "Lifecycle stage",  "value": "Active client, renewal at risk"},
+    {"label": "Relationship",     "value": "Warm but cooling — logins down 60% YoY"},
+    {"label": "Main risk",        "value": "Will not renew without proof that the QSR + Retail patches are getting fresh signal"},
+    {"label": "Main opportunity", "value": "Upsell to Prospector Predictions for the agency desk; Damien has mentioned interest twice"}
+  ],
+  "prospect_focus": [
+    {"label": "Industries & verticals", "value": "QSR (top priority), Retail, and Banking. Looking for challenger brands — Damien explicitly avoids tier-1 ad spenders; wants to sell against agency incumbents. Mentioned Boost Juice, Guzman y Gomez, and Bank Australia as the kinds of accounts he wants intel on."},
+    {"label": "Agency vs Direct",       "value": "Direct patch. Network Ten sells direct to brand teams — agencies are a relationship layer he manages but not who he sells to. He's flagged Initiative and OMD as the two agencies he wants insight on when their clients change brief."},
+    {"label": "Region / state focus",   "value": "National coverage but with VIC/NSW emphasis. Has explicitly deprioritised WA and Tas — doesn't have a seller in those markets. SA only matters when a national QSR rollout is in play."}
+  ],
+  "blockers": [
+    {"label": "Data accuracy / freshness",  "value": "Raised in Apr 2026 dialogue — flagged 3 Coles contacts as out of date and one Guzman y Gomez contact who'd left the business 6 months earlier. Said 'if I can't trust the names, I can't pitch off the platform'."},
+    {"label": "Time / proactive use",       "value": "Has said twice in the last 2 months he's 'too busy running pitches to log in'. Last login was 9 Apr. Wants insights pushed to him rather than having to hunt for them."},
+    {"label": "Other blockers",             "value": "Pricing pushback in Feb 2026 — said the per-seat cost was hard to justify against the lower number of inbound leads from the platform vs his other vendors. Pushed for a usage-based pilot, no response logged."}
+  ],
+  "last_meeting_next_steps": {
+    "had_steps": true,
+    "steps": [
+      {
+        "step": "Alex to deliver 5 QSR challenger-brand cards by 15 Apr 2026",
+        "status": "Done",
+        "evidence": "16 Apr dialogue: 'Damien confirmed receipt of the 5 cards — flagged Boost Juice as the standout, asked for 3 more like it.'"
+      },
+      {
+        "step": "Damien to circulate the cards to the QSR sales pod and report which generated a meeting booking",
+        "status": "Not done",
+        "evidence": "No mention of circulation in dialogue since 16 Apr. Apr 28 catch-up notes say Damien was 'in pitch mode all week, hadn't got to it'."
+      },
+      {
+        "step": "Alex to send pricing comparison vs Roy Morgan and IBIS by end of April",
+        "status": "Partially done",
+        "evidence": "Apr 22 dialogue: pricing sent for Roy Morgan only. IBIS comparison still outstanding."
+      }
+    ]
+  },
+  "meeting_moves": [
+    {
+      "title": "Open with the QSR cards — confirm they worked before pushing for the circulation follow-through",
+      "rows": [
+        {"label": "Evidence", "value": "Damien rated 4 of the 5 cards 'genuinely useful' (16 Apr) — proof the format lands when targeted."},
+        {"label": "Question", "value": "Of the 5 cards I sent, which one would you re-use today to open a cold conversation?"},
+        {"label": "Example",  "value": "The Boost Juice card mapped a Series B raise to their FY27 brand campaign window — the kind of timing intel his desk needs."},
+        {"label": "Objection","value": "I've been too busy to circulate them properly."},
+        {"label": "Response", "value": "Let me push the next batch directly into your team's Slack — you don't need to forward anything. Want me to set that up?"}
+      ]
+    },
+    {
+      "title": "Confront the data freshness complaint — show what changed since April",
+      "rows": [
+        {"label": "Evidence", "value": "Damien named 4 specific contacts as stale in Apr. Bring evidence those names have since been refreshed (last_updated dates)."},
+        {"label": "Question", "value": "If I show you the 4 contacts you flagged are now current, does that change your read on the rest of the dataset?"},
+        {"label": "Example",  "value": "Coles VP Marketing record updated 28 Apr; Guzman y Gomez Head of Brand updated 12 May."},
+        {"label": "Objection","value": "Four contacts being right doesn't mean the next four will be."},
+        {"label": "Response", "value": "Agreed — would a quarterly 'flag and verify' channel for his patch fix the trust gap? It's how we've handled it for the Sportsbet account."}
+      ]
+    },
+    {
+      "title": "Surface the pricing pilot proposal he raised in Feb — get a yes/no before renewal conversation starts",
+      "rows": [
+        {"label": "Evidence", "value": "Damien asked about usage-based pricing in Feb — no response logged. Renewal is in 4 months; this needs to be either offered or killed before the renewal call."},
+        {"label": "Question", "value": "You floated a usage-based pilot in Feb — is that still something you'd consider, or has the budget conversation moved on?"},
+        {"label": "Example",  "value": "We've trialled a usage-based model with one other agency desk — happy to share what the pricing looked like and the activity threshold."},
+        {"label": "Objection","value": "Procurement won't accept anything other than a flat per-seat fee."},
+        {"label": "Response", "value": "Understood — then let's stop talking about pricing and instead build a usage proof-point that justifies the current per-seat in the renewal paper. That's the real question."}
+      ]
+    }
+  ]
+}

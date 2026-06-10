@@ -1,32 +1,50 @@
 #!/usr/bin/env python3
-"""
-Render a meeting prep brief from JSON to email-safe inline-styled HTML.
+"""DRAFT renderer for the redesigned 5-section meeting brief.
 
-Reads JSON from stdin, writes HTML brief container to stdout.
+Not wired into the live pipeline. Used to produce sample_brief.html
+so the new structure can be visually reviewed before we modify
+meeting_prep.sh + render_brief.py.
 
-JSON schema (all fields optional — missing renders as "—" or empty):
+Reads JSON from stdin OR a path passed as argv[1], writes HTML to stdout.
+
+Proposed JSON schema (all sections optional — missing renders honestly):
 {
   "subtitle": "<Company> · <Meeting type>",
   "meta": {"lifecycle": "...", "renewal_due": "...", "status_label": "..."},
-  "no_fmp_dialogue":   true,  // when set, prospect_focus/blockers/next_steps/moves are replaced with a banner
-  "snapshot":          [{"label": "...", "value": "..."}, ...],
-  "prospect_focus":    [{"label": "...", "value": "..."}, ...],  // Industries, Agency vs Direct, Region
-  "blockers":          [{"label": "...", "value": "..."}, ...],  // rendered red when value is real
+
+  "snapshot": [
+    {"label": "Company",          "value": "..."},
+    {"label": "Contact",          "value": "..."},
+    {"label": "Meeting type",     "value": "..."},
+    {"label": "Lifecycle stage",  "value": "..."},
+    {"label": "Relationship",     "value": "..."},
+    {"label": "Main risk",        "value": "..."},
+    {"label": "Main opportunity", "value": "..."}
+  ],
+
+  "prospect_focus": [
+    {"label": "Industries & verticals", "value": "..."},
+    {"label": "Agency vs Direct",       "value": "..."},
+    {"label": "Region / state focus",   "value": "..."}
+  ],
+
+  "blockers": [
+    {"label": "Data accuracy / freshness",  "value": "..."},
+    {"label": "Time / proactive use",       "value": "..."},
+    {"label": "Other blockers",             "value": "..."}
+  ],
+
   "last_meeting_next_steps": {
     "had_steps": true,
-    "steps": [{"step": "...", "status": "Done|Partially done|Not done|Unclear", "evidence": "..."}]
+    "steps": [
+      {"step": "Alex to send 5 sample QSR insights by 15 Mar",
+       "status": "Done",
+       "evidence": "Mar 18 dialogue: 'Damien confirmed receipt of the 5 QSR cards.'"}
+    ]
   },
-  "meeting_moves":     [
-    {"title": "...", "rows": [{"label": "Evidence", "value": "..."}, ...]}
-  ]
-}
 
-CLI flags inject system-side context that the AI doesn't know:
-  --name "Toby Brocklehurst"
-  --company "St Kilda Saints"
-  --interactions "50 recent"
-  --status "Active Connector"
-  --meeting-intent "Renewal Check-in"
+  "meeting_moves": [ /* same shape as live brief */ ]
+}
 """
 
 import sys
@@ -34,6 +52,7 @@ import json
 import argparse
 import html as html_lib
 
+# Match palette from live render_brief.py so the draft looks like the real thing
 FONT = "'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
 C_TEXT = "#0e1116"
 C_BODY = "#1a1d21"
@@ -80,8 +99,8 @@ def section_head(num, title):
 def kv_table(rows, highlight_when_present=False):
     """Render label/value rows.
 
-    highlight_when_present: when True, rows whose value is real (not "Not
-    found in CRM") render the value column in warning-red. Used for Blockers.
+    highlight_when_present: when True, rows with a real value (not "Not
+    mentioned") get a warning-red value column. Used for Blockers.
     """
     if not rows:
         return ""
@@ -106,7 +125,7 @@ def kv_table(rows, highlight_when_present=False):
             f'<td class="kv-label" width="38%" style="padding:11px 16px; {bb} border-right:1px solid {C_BORDER}; '
             f'font-family:{FONT}; font-size:13px; color:{C_MUTED}; font-weight:500; vertical-align:top;">{label}</td>'
             f'<td class="kv-value" style="padding:11px 16px; {bb} font-family:{FONT}; font-size:14px; '
-            f'color:{val_color}; vertical-align:top;">{esc(value)}</td>'
+            f'color:{val_color}; vertical-align:top;">{esc(value) or "—"}</td>'
             f'</tr>'
         )
     out.append('</table>')
@@ -122,9 +141,11 @@ def next_step_card(step):
         bg, border, text = C_WARN_BG, C_WARN_BORDER, C_WARN_TEXT
     elif status_norm == "not done":
         bg, border, text = "#fdecec", "#f4c4c4", C_OBJECTION
-    else:
+    else:  # Unclear / unknown
         bg, border, text = C_BG, C_BORDER, C_DIM
 
+    step_text = esc(step.get("step", ""))
+    evidence = esc(step.get("evidence", ""))
     status_html = (
         f'<span style="display:inline-block; font-family:{FONT}; font-size:11px; font-weight:600; '
         f'letter-spacing:0.05em; text-transform:uppercase; padding:3px 9px; background-color:{bg}; '
@@ -135,37 +156,22 @@ def next_step_card(step):
         f'style="margin-bottom:10px; background-color:{C_BG}; border:1px solid {C_BORDER}; border-radius:8px;">'
         f'<tr><td style="padding:16px 22px;">'
         f'<div style="margin-bottom:8px;">{status_html}</div>'
-        f'<div style="font-family:{FONT}; font-size:14px; line-height:1.5; color:{C_TEXT}; font-weight:500; margin-bottom:6px;">{esc(step.get("step", ""))}</div>'
-        f'<div style="font-family:{FONT}; font-size:13px; line-height:1.5; color:{C_MUTED};">{esc(step.get("evidence", ""))}</div>'
+        f'<div style="font-family:{FONT}; font-size:14px; line-height:1.5; color:{C_TEXT}; font-weight:500; margin-bottom:6px;">{step_text}</div>'
+        f'<div style="font-family:{FONT}; font-size:13px; line-height:1.5; color:{C_MUTED};">{evidence}</div>'
         f'</td></tr></table>'
     )
 
 
 def next_steps_block(data):
     nx = data.get("last_meeting_next_steps") or {}
-    steps = nx.get("steps") or []
-    if not nx.get("had_steps", False) or not steps:
+    if not nx.get("had_steps", False):
         return (
             f'<div style="margin-bottom:36px; padding:14px 18px; background-color:{C_BG}; '
             f'border:1px dashed {C_BORDER}; border-radius:8px; font-family:{FONT}; font-size:13px; color:{C_DIM};">'
             f'No explicit next steps were logged in the last interaction.'
             f'</div>'
         )
-    return ''.join(next_step_card(s) for s in steps)
-
-
-def no_fmp_dialogue_banner():
-    return (
-        f'<div style="margin-bottom:36px; padding:18px 22px; background-color:{C_WARN_BG}; '
-        f'border:1px solid {C_WARN_BORDER}; border-radius:8px;">'
-        f'<div style="font-family:{FONT}; font-size:11px; font-weight:600; letter-spacing:0.06em; '
-        f'text-transform:uppercase; color:{C_WARN_TEXT}; margin-bottom:8px;">No FMP dialogue found</div>'
-        f'<div style="font-family:{FONT}; font-size:14px; line-height:1.5; color:{C_BODY};">'
-        f'There is no prior dialogue logged for this contact in FileMaker. Treat as a first meeting — '
-        f'ask discovery questions on prospect focus, current blockers, and what success looks like, then log dialogue afterwards.'
-        f'</div>'
-        f'</div>'
-    )
+    return ''.join(next_step_card(s) for s in nx.get("steps", []))
 
 
 def meeting_move(move):
@@ -219,7 +225,6 @@ def render(data, ctx):
         ("Interactions", ctx.interactions or meta.get("interactions") or "—"),
         ("Status", meta.get("status_label") or ctx.status or "—"),
     ]
-
     meta_html = ''.join(
         f'<td class="meta-cell" width="25%" style="padding:14px 16px; '
         f'{"border-right:1px solid "+C_BORDER+";" if i < 3 else ""} vertical-align:top;">'
@@ -230,29 +235,34 @@ def render(data, ctx):
         for i, (label, value) in enumerate(cells)
     )
 
-    if data.get("no_fmp_dialogue"):
-        body = (
-            section_head(1, "Meeting Snapshot") + kv_table(data.get("snapshot", [])) +
-            no_fmp_dialogue_banner()
-        )
-    else:
-        body = (
-            section_head(1, "Meeting Snapshot") + kv_table(data.get("snapshot", [])) +
-            section_head(2, "Prospect Focus") + kv_table(data.get("prospect_focus", [])) +
-            section_head(3, "Blockers & Challenges") + kv_table(data.get("blockers", []), highlight_when_present=True) +
-            section_head(4, "Last Meeting Next Steps") + next_steps_block(data) +
-            section_head(5, "Practical Meeting Moves") + meeting_moves(data.get("meeting_moves", []))
-        )
+    body = (
+        section_head(1, "Meeting Snapshot") +
+        kv_table(data.get("snapshot", [])) +
+
+        section_head(2, "Prospect Focus") +
+        kv_table(data.get("prospect_focus", [])) +
+
+        section_head(3, "Blockers & Challenges") +
+        kv_table(data.get("blockers", []), highlight_when_present=True) +
+
+        section_head(4, "Last Meeting Next Steps") +
+        next_steps_block(data) +
+
+        section_head(5, "Practical Meeting Moves") +
+        meeting_moves(data.get("meeting_moves", []))
+    )
 
     return (
+        f'<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Draft brief — {esc(name)}</title></head>'
+        f'<body style="margin:0; padding:32px; background:#f5f6f8;">'
         f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="640" class="container" '
         f'style="width:640px; max-width:640px; background-color:#ffffff; border:1px solid #e6e8ec; '
-        f'border-radius:12px; overflow:hidden; margin-bottom:24px;">'
+        f'border-radius:12px; overflow:hidden; margin:0 auto;">'
         f'<tr><td class="px" style="padding:40px 44px 28px 44px; border-bottom:1px solid {C_BORDER};">'
         f'<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>'
         f'<td style="background-color:{C_ACCENT_BG}; border:1px solid {C_ACCENT_BORDER}; border-radius:999px; '
         f'padding:6px 12px; font-family:{FONT}; font-size:11px; font-weight:600; letter-spacing:0.06em; '
-        f'text-transform:uppercase; color:{C_ACCENT_TEXT};">Meeting Brief</td></tr></table>'
+        f'text-transform:uppercase; color:{C_ACCENT_TEXT};">Meeting Brief · Draft</td></tr></table>'
         f'<h1 class="brief-h1" style="margin:20px 0 6px 0; font-family:{FONT}; font-size:34px; line-height:1.1; '
         f'font-weight:700; letter-spacing:-0.02em; color:{C_TEXT};">{esc(name)}</h1>'
         f'<p style="margin:0 0 28px 0; font-family:{FONT}; font-size:16px; line-height:1.4; color:{C_MUTED};">{esc(subtitle)}</p>'
@@ -260,22 +270,9 @@ def render(data, ctx):
         f'style="border:1px solid {C_BORDER}; border-radius:8px; background-color:{C_BG};">'
         f'<tr>{meta_html}</tr></table>'
         f'</td></tr>'
-        f'<tr><td class="px" style="padding:36px 44px 16px 44px;">{body}</td></tr>'
+        f'<tr><td class="px" style="padding:36px 44px 28px 44px;">{body}</td></tr>'
         f'</table>'
-    )
-
-
-def fallback(error_msg, raw):
-    snippet = esc(raw[:1500])
-    return (
-        f'<table role="presentation" width="640" style="background:#fff; padding:24px; border-radius:8px; '
-        f'border:1px solid #eef0f3; font-family:{FONT};">'
-        f'<tr><td>'
-        f'<div style="font-size:14px; color:{C_OBJECTION}; font-weight:600; margin-bottom:8px;">Brief generation failed</div>'
-        f'<div style="font-size:13px; color:{C_MUTED}; margin-bottom:12px;">{esc(error_msg)}</div>'
-        f'<pre style="background:#f5f6f8; padding:12px; overflow:auto; font-size:11px; '
-        f'border-radius:6px; white-space:pre-wrap;">{snippet}</pre>'
-        f'</td></tr></table>'
+        f'</body></html>'
     )
 
 
@@ -286,15 +283,16 @@ def main():
     p.add_argument("--interactions", default="")
     p.add_argument("--status", default="")
     p.add_argument("--meeting-intent", dest="meeting_intent", default="")
+    p.add_argument("input", nargs="?", default=None, help="JSON file path; if omitted, read stdin")
     args = p.parse_args()
 
-    raw = sys.stdin.read()
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError as e:
-        print(fallback(f"JSON parse error: {e}", raw))
-        return
+    if args.input:
+        with open(args.input) as f:
+            raw = f.read()
+    else:
+        raw = sys.stdin.read()
 
+    data = json.loads(raw)
     print(render(data, args))
 
 

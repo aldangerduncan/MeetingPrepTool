@@ -163,12 +163,41 @@ fi
 
 if [ "$d_code" != "0" ]; then
     INTERACTION_TEXT="No interaction history found."
+    count=0
 else
     count=$(echo "$response_dialogues" | jq '.response.data | length')
     INTERACTION_TEXT="Found $count recent interactions."
 fi
 
 echo "[*] Brief: $NAME ($DISPLAY_COMPANY) — $CLIENT_STATUS ($PRODUCT) — $INTERACTION_TEXT" >&2
+
+# No-dialogue early-exit: skip the LLM call entirely and emit a banner brief.
+if [ "$count" -eq 0 ]; then
+    NO_DLG_JSON=$(jq -n \
+        --arg company "$COMPANY" \
+        --arg name "$NAME" \
+        --arg status "$CLIENT_STATUS" \
+        --arg product "$PRODUCT" \
+        '{
+            no_fmp_dialogue: true,
+            subtitle: ($company + " · First Meeting"),
+            meta: {lifecycle: "First Meeting", renewal_due: "—", status_label: ($status // "New")},
+            snapshot: [
+                {label: "Company",     value: ($company // "—")},
+                {label: "Contact",     value: $name},
+                {label: "Client status", value: ($status // "—")},
+                {label: "Product",     value: ($product // "—")}
+            ]
+        }')
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+    echo "$NO_DLG_JSON" | python3 "$SCRIPT_DIR/render_brief.py" \
+        --name "$NAME" \
+        --company "$COMPANY" \
+        --interactions "0" \
+        --status "$CLIENT_STATUS" \
+        --meeting-intent "First Meeting"
+    exit 0
+fi
 
     # Prepare content for both display and LLM
     FULL_CONTEXT=""
@@ -257,6 +286,12 @@ CORE RULES:
 - Do not overstate certainty. Label inferences as inferences.
 - Plain text only in field values — no HTML, no markdown, no asterisks, no bullet characters.
 
+SECTION-SPECIFIC RULES:
+- Prospect Focus: extract what kinds of prospects this contact is hunting for — industries/verticals, whether they sell direct or via agencies, which states/regions matter. Quote dialogue where useful.
+- Blockers: surface ONLY explicit complaints or barriers found in the dialogue (e.g. "flagged Coles contacts as out of date", "said he has no time to log in"). Do NOT infer dissatisfaction from neutral language. If none are logged, set the value to "None raised".
+- Last Meeting Next Steps: find the most recent dialogue entry that names agreed actions (look for phrases like "to send", "to circulate", "will follow up", "next step"). For each step, look at SUBSEQUENT dialogue entries for evidence the step was actioned. Status must be exactly one of: "Done", "Partially done", "Not done", "Unclear". If no explicit next steps were logged in the last interaction, set "had_steps": false and leave "steps": [].
+- Practical Meeting Moves: bias the moves to the next-step status. If a step is "Not done", at least one move should open the conversation about why it did not happen. If "Done", build on it (push for next stage). If "Partially done", ask about the remaining piece. Always at least three moves.
+
 OUTPUT FORMAT (strict):
 Return a single JSON object that exactly matches this schema. No preamble, no closing remarks, no code fences — just the JSON object.
 
@@ -276,51 +311,26 @@ Return a single JSON object that exactly matches this schema. No preamble, no cl
     {"label": "Main risk",        "value": "..."},
     {"label": "Main opportunity", "value": "..."}
   ],
-  "commercial_read": {
-    "label": "Bottom line",
-    "paragraphs": ["<short blunt para 1>", "<short blunt para 2>"]
+  "prospect_focus": [
+    {"label": "Industries & verticals", "value": "..."},
+    {"label": "Agency vs Direct",       "value": "..."},
+    {"label": "Region / state focus",   "value": "..."}
+  ],
+  "blockers": [
+    {"label": "Data accuracy / freshness", "value": "..."},
+    {"label": "Time / proactive use",      "value": "..."},
+    {"label": "Other blockers",            "value": "..."}
+  ],
+  "last_meeting_next_steps": {
+    "had_steps": true,
+    "steps": [
+      {
+        "step":     "<the agreed action, as logged>",
+        "status":   "Done|Partially done|Not done|Unclear",
+        "evidence": "<the dialogue line(s) that support this status — quote dates where possible>"
+      }
+    ]
   },
-  "stakeholders": [
-    {"label": "Main contact",          "value": "<name — what they care about>"},
-    {"label": "Decision-maker",        "value": "..."},
-    {"label": "Economic buyer",        "value": "..."},
-    {"label": "Daily users",           "value": "..."},
-    {"label": "Champion",              "value": "..."},
-    {"label": "Sceptic",               "value": "..."},
-    {"label": "Missing stakeholders",  "value": "..."}
-  ],
-  "brand_appetite": {
-    "Brand types":       ["...", "..."],
-    "Verticals":         ["...", "..."],
-    "Target categories": ["..."],
-    "Trigger types":     ["..."]
-  },
-  "agency_buying_path": "<one paragraph covering: direct vs agency, agencies mentioned, HoldCo vs independent, new business vs existing>",
-  "region_focus": [
-    {"label": "Geographic focus",       "value": "..."},
-    {"label": "State / City / National","value": "..."},
-    {"label": "Agency patch",           "value": "..."},
-    {"label": "New business patch",     "value": "..."},
-    {"label": "Existing client patch",  "value": "..."}
-  ],
-  "value_evidence": [
-    {"label": "Evidence of value",        "value": "..."},
-    {"label": "Poor adoption",            "value": "..."},
-    {"label": "Features that worked",     "value": "..."},
-    {"label": "Features that didn't land","value": "..."},
-    {"label": "Specific use cases",       "value": "..."},
-    {"label": "Blocked value reason",     "value": "..."}
-  ],
-  "recommended_angle": {
-    "label": "Open with",
-    "paragraphs": ["<para 1: how to open>", "<para 2: what to confront / what to push for>"]
-  },
-  "proof_points": [
-    {"label": "Brand examples",        "value": "..."},
-    {"label": "Trigger examples",      "value": "..."},
-    {"label": "Suggested searches",    "value": "..."},
-    {"label": "Relevant client cases", "value": "..."}
-  ],
   "meeting_moves": [
     {
       "title": "<short, action-oriented imperative>",
