@@ -20,7 +20,7 @@ fi
 # Format: HTML <div class="calendar-item">...</div>
 # shortDate is "d MMM yyyy HH:mm"
 # We define "Today" string to separate lists
-TODAY_STR=$(date "+%-d %b %Y")
+TODAY_STR=$(TZ=Australia/Sydney date "+%-d %b %Y")
 
 # Determine correct label for "Yesterday" section
 LABEL="Yesterday"
