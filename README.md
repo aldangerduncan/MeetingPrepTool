@@ -19,7 +19,7 @@ VPS (216.250.118.221)
 
 Data sources
 ├── FileMaker (fms14.filemakerstudio.com.au)  → CRM stats & contact records
-├── Google Apps Script (CalendarWebApp.js)    → calendar events & email delivery
+├── Google Apps Script (reference/CalendarWebApp.js) → calendar events & email delivery
 ├── Prospector API                            → industry insights
 └── OpenAI GPT-4o                            → briefing generation & insight selection
 ```
@@ -35,12 +35,21 @@ Data sources
 | `meeting_prep.sh` | Per-attendee briefing generator |
 | `fm_stats.sh` | Pulls yesterday's activity stats from FileMaker |
 | `get_calendar_events.sh` | Fetches today's calendar via Google Apps Script |
-| `analyze_prospector_insights.py` | Fetches and AI-ranks Prospector insights |
 | `get_token.sh` | Manages FileMaker auth tokens |
-| `CalendarWebApp.js` | Google Apps Script (deploy to your own account) |
+| `reference/CalendarWebApp.js` | Google Apps Script (deploy to your own account) |
 | `update_vps_schedule.sh` | Deploy script — syncs code, timezone, and cron to VPS |
 | `email_meeting_prep.sh` | On-demand meeting prep triggered via SSH |
 | `CloudKeyContact.command` | Runs key contact prep remotely via SSH |
+
+Prospector insights (the Daily Huddle's third section) are no longer generated
+by anything in this repo — they're fetched at runtime from the `insights-api`
+service on the VPS (`/root/prospector_reporting/insights_api.py`, a separate
+project). `legacy/analyze_prospector_insights.py` is the old standalone
+version, kept only for reference.
+
+See [CLAUDE.md](../CLAUDE.md) for the full folder layout, every process this
+repo runs, and what's safe to move vs. what will break cron/the desktop apps
+if relocated.
 
 ---
 

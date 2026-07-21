@@ -36,7 +36,7 @@ ssh -A "$USER@$HOST" "bash -s" <<EOF
     git reset --hard origin/main
     
     # 2. Set Permissions
-    chmod +x *.sh *.command *.py
+    chmod +x *.sh *.command *.py setup/*.sh legacy/*.sh legacy/*.py debug/*.sh debug/*.command 2>/dev/null
 
     # 2b. Ensure Python deps for monday_brands_to_watch.py
     pip3 install --quiet psycopg2-binary 2>/dev/null || pip3 install --break-system-packages --quiet psycopg2-binary

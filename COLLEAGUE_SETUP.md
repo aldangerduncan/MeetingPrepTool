@@ -97,7 +97,7 @@ Meeting Prep reads today's calendar and emails the report via a small Google App
 
 **4b.** Click **New Project**
 
-**4c.** Delete all existing content in the editor and paste in the contents of the file `CalendarWebApp.js` from the app folder
+**4c.** Delete all existing content in the editor and paste in the contents of the file `reference/CalendarWebApp.js` from the app folder
 
 **4d.** Find and replace every instance of `alex.sheath@irdgroup.com.au` with the new user's email address (there are 3 occurrences)
 
