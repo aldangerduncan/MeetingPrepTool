@@ -76,7 +76,7 @@ HTML_START='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http
 echo "[*] Fetching Today's Meetings..."
 CAL_JSON=$(curl -L -s "$WEB_APP_URL")
 
-TODAY_FULL=$(date "+%-d %b %Y")
+TODAY_FULL=$(TZ=Australia/Sydney date "+%-d %b %Y")
 
 # Get meeting indices for today
 MEETING_COUNT=$(echo "$CAL_JSON" | jq -r --arg today "$TODAY_FULL" '[.events[] | select(.shortDate | startswith($today))] | length')

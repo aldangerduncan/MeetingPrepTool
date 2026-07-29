@@ -41,10 +41,10 @@ fi
 
 # 5. Build HTML Report
 STATS_LABEL="Yesterday’s Stats"
-if [ "$(date +%u)" -eq 1 ]; then
+if [ "$(TZ=Australia/Sydney date +%u)" -eq 1 ]; then
     STATS_LABEL="Last Friday’s Stats"
 fi
-TODAY_FULL=$(date "+%-d %b %Y")
+TODAY_FULL=$(TZ=Australia/Sydney date "+%-d %b %Y")
 # TODAY_SHORT=$(date "+%d %b %Y") # e.g. 7 Jan 2026
 
 HTML_DIR="../DailyHuddle"
