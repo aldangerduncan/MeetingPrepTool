@@ -127,6 +127,22 @@ else
     COMPANY="$COMPANY_RAW"
 fi
 
+# Prospector usage (last 30 days) — best-effort, never blocks the brief
+USAGE_COUNT=""
+USAGE_FLAG=""
+if [ -n "$COMPANY" ] && [ -n "$EMAIL" ] && [ "$EMAIL" != "null" ]; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        USAGE_BASE="http://216.250.118.221"
+    else
+        USAGE_BASE="http://127.0.0.1"
+    fi
+    USAGE_JSON=$(curl -s --max-time 15 -G "$USAGE_BASE/client-usage" --data-urlencode "company=$COMPANY" --data-urlencode "email=$EMAIL")
+    if [ "$(echo "$USAGE_JSON" | jq -r '.matched // false' 2>/dev/null)" == "true" ]; then
+        USAGE_COUNT=$(echo "$USAGE_JSON" | jq -r '.count')
+        USAGE_FLAG=$(echo "$USAGE_JSON" | jq -r '.flag')
+    fi
+fi
+
 # Extra Context Fields
 CLIENT_STATUS=$(echo "$response" | jq -r '.response.data[0].fieldData["subct_SUBCO by name::Client Status"] // "Unknown"')
 PRODUCT=$(echo "$response" | jq -r '.response.data[0].fieldData.Product // "Unknown"')
@@ -195,7 +211,9 @@ if [ "$count" -eq 0 ]; then
         --company "$COMPANY" \
         --interactions "0" \
         --status "$CLIENT_STATUS" \
-        --meeting-intent "First Meeting"
+        --meeting-intent "First Meeting" \
+        --usage-count "$USAGE_COUNT" \
+        --usage-flag "$USAGE_FLAG"
     exit 0
 fi
 
@@ -416,7 +434,9 @@ EOF
                   --company "$COMPANY" \
                   --interactions "$count recent" \
                   --status "$CLIENT_STATUS" \
-                  --meeting-intent "$MEETING_INTENT"
+                  --meeting-intent "$MEETING_INTENT" \
+                  --usage-count "$USAGE_COUNT" \
+                  --usage-flag "$USAGE_FLAG"
         fi
 
     else

@@ -27,6 +27,9 @@ CLI flags inject system-side context that the AI doesn't know:
   --interactions "50 recent"
   --status "Active Connector"
   --meeting-intent "Renewal Check-in"
+  --usage-count "8"          // Prospector logins in the last --usage-window days; omit if unknown
+  --usage-flag "green"       // red|yellow|green — colors the meta cell
+  --usage-window "30"        // days, default 30
 """
 
 import sys
@@ -214,20 +217,26 @@ def render(data, ctx):
 
     meta = data.get("meta") or {}
     cells = [
-        ("Lifecycle", meta.get("lifecycle") or "—"),
-        ("Renewal Due", meta.get("renewal_due") or "—"),
-        ("Interactions", ctx.interactions or meta.get("interactions") or "—"),
-        ("Status", meta.get("status_label") or ctx.status or "—"),
+        ("Lifecycle", meta.get("lifecycle") or "—", C_TEXT),
+        ("Renewal Due", meta.get("renewal_due") or "—", C_TEXT),
+        ("Interactions", ctx.interactions or meta.get("interactions") or "—", C_TEXT),
+        ("Status", meta.get("status_label") or ctx.status or "—", C_TEXT),
     ]
 
+    if ctx.usage_flag:
+        usage_color = {"red": C_OBJECTION, "yellow": C_WARN_TEXT, "green": C_OK_TEXT}.get(ctx.usage_flag, C_TEXT)
+        usage_value = f'{ctx.usage_count} logins ({ctx.usage_window}d)' if ctx.usage_count is not None else '—'
+        cells.append((f'Prospector Usage', usage_value, usage_color))
+
+    n = len(cells)
     meta_html = ''.join(
-        f'<td class="meta-cell" width="25%" style="padding:14px 16px; '
-        f'{"border-right:1px solid "+C_BORDER+";" if i < 3 else ""} vertical-align:top;">'
+        f'<td class="meta-cell" width="{100//n}%" style="padding:14px 16px; '
+        f'{"border-right:1px solid "+C_BORDER+";" if i < n - 1 else ""} vertical-align:top;">'
         f'<div style="font-family:{FONT}; font-size:11px; font-weight:600; letter-spacing:0.05em; '
         f'text-transform:uppercase; color:{C_DIM}; margin-bottom:4px;">{label}</div>'
-        f'<div style="font-family:{FONT}; font-size:14px; font-weight:600; color:{C_TEXT};">{esc(value)}</div>'
+        f'<div style="font-family:{FONT}; font-size:14px; font-weight:600; color:{color};">{esc(value)}</div>'
         f'</td>'
-        for i, (label, value) in enumerate(cells)
+        for i, (label, value, color) in enumerate(cells)
     )
 
     if data.get("no_fmp_dialogue"):
@@ -286,7 +295,13 @@ def main():
     p.add_argument("--interactions", default="")
     p.add_argument("--status", default="")
     p.add_argument("--meeting-intent", dest="meeting_intent", default="")
+    p.add_argument("--usage-count", dest="usage_count", default="")
+    p.add_argument("--usage-flag", dest="usage_flag", default="")
+    p.add_argument("--usage-window", dest="usage_window", default="30")
     args = p.parse_args()
+    args.usage_count = int(args.usage_count) if args.usage_count.strip().isdigit() else None
+    if args.usage_flag not in ("red", "yellow", "green"):
+        args.usage_flag = ""
 
     raw = sys.stdin.read()
     try:
