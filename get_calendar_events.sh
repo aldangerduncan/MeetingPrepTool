@@ -6,10 +6,20 @@
 
 WEB_APP_URL="https://script.google.com/macros/s/AKfycbxhH0lpZ3tq6KZovVQV8UpJubi74EloknJRQzYfDiV7yfAr585sdw_OGNPzCMkzjAlG/exec"
 
-# Fetch JSON (follow redirects with -L)
-RESPONSE=$(curl -L -s "$WEB_APP_URL")
+# Fetch JSON (follow redirects with -L), retrying if Google returns a
+# transient error page (e.g. HTML "Page Not Found") instead of JSON.
+MAX_ATTEMPTS=3
+RESPONSE=""
+for attempt in $(seq 1 $MAX_ATTEMPTS); do
+    RESPONSE=$(curl -L -s --max-time 30 "$WEB_APP_URL")
+    if [ -n "$RESPONSE" ] && echo "$RESPONSE" | jq -e . >/dev/null 2>&1; then
+        break
+    fi
+    RESPONSE=""
+    [ "$attempt" -lt "$MAX_ATTEMPTS" ] && sleep 5
+done
 
-# Check if curl failed or returned empty
+# Check if all attempts failed or returned empty/invalid JSON
 if [ -z "$RESPONSE" ]; then
     echo "Error: Failed to fetch calendar data."
     exit 1
