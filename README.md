@@ -24,6 +24,12 @@ Data sources
 └── OpenAI GPT-4o                            → briefing generation & insight selection
 ```
 
+The Google Apps Script web app occasionally returns a transient HTML error
+instead of JSON. `get_calendar_events.sh` retries the fetch up to 3 times
+and validates the response is parseable JSON before using it, so a blank
+Calendar section in Daily Huddle shouldn't recur — if it does, check
+`/tmp/daily_huddle.log` on the VPS for `jq: parse error`.
+
 ---
 
 ## Repository Contents
