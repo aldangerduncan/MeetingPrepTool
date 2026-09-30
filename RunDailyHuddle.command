@@ -31,11 +31,11 @@ CAL_EVENTS=$(./get_calendar_events.sh)
 
 # 4. Get Prospector Insights (AI via VPS)
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    EMAIL_INSIGHTS=$(curl -s --max-time 120 "http://216.250.118.221/daily-insights")
+    EMAIL_INSIGHTS=$(curl -sf --max-time 120 "http://216.250.118.221/daily-insights")
 else
-    EMAIL_INSIGHTS=$(curl -s --max-time 120 "http://127.0.0.1/daily-insights")
+    EMAIL_INSIGHTS=$(curl -sf --max-time 120 "http://127.0.0.1/daily-insights")
 fi
-if echo "$EMAIL_INSIGHTS" | grep -qi "error\|500\|502\|bad gateway"; then
+if [[ -z "$EMAIL_INSIGHTS" ]] || echo "$EMAIL_INSIGHTS" | grep -qi "error\|500\|502\|bad gateway"; then
     EMAIL_INSIGHTS='<div class="insight">No insights published yesterday.</div>'
 fi
 
