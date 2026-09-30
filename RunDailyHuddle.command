@@ -18,7 +18,7 @@ if [ "$(date +%u)" -eq 1 ]; then
     fi
     MONDAY_SUBJECT="Brands to Watch — $(date '+%-d %b %Y')"
     MONDAY_PAYLOAD=$(jq -n --arg html "$MONDAY_HTML" --arg subj "$MONDAY_SUBJECT" '{html: $html, subject: $subj}')
-    curl -L -s -X POST -H "Content-Type: application/json" -d "$MONDAY_PAYLOAD" "$WEB_APP_URL" > /dev/null
+    curl -L -s -H "Content-Type: application/json" -d "$MONDAY_PAYLOAD" "$WEB_APP_URL" > /dev/null
     echo "[*] Brands to Watch email sent."
     exit 0
 fi
@@ -239,7 +239,7 @@ HTML_CONTENT=$(cat "$HTML_FILE")
 PAYLOAD=$(jq -n --arg html "$HTML_CONTENT" --arg subj "Daily Huddle - $TODAY_FULL" '{html: $html, subject: $subj}')
 
 # POST to Web App
-RESPONSE=$(curl -L -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEB_APP_URL")
+RESPONSE=$(curl -L -s -H "Content-Type: application/json" -d "$PAYLOAD" "$WEB_APP_URL")
 
 echo "Email Status: $RESPONSE"
 echo "Report generated at: $HTML_FILE"
